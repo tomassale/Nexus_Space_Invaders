@@ -1,14 +1,15 @@
-#include <SDL.h>
-#include "game.h"
-#include "mapa.h"
 #include "jugador.h"
-#include "recursos.h"
+
 #define IZQUIERDA -1
 #define DERECHA 1
 
-//ejemplo ventana 800x600
-//#define PLAYER_START_X 400 //arranca al costado (cambiar)
-//#define PLAYER_START_Y 550 //constante en y
+#define VELOCIDAD_JUGADOR 3
+#define ANCHO_JUGADOR 40
+
+/* Valores provisionales */
+#define VENTANA_X 256
+#define PLAYER_START_X 20
+#define PLAYER_START_Y 220
 
 void jugador_iniciar(tJugador *jugador)
 {
@@ -20,21 +21,19 @@ void jugador_iniciar(tJugador *jugador)
 
 void jugador_mover(tJugador *jugador, int direccion)
 {
-    if(direccion == IZQUIERDA)
-        jugador->x--;
-    if(direccion == DERECHA)
-        jugador->x++;
-}
+    int resultante;
 
-void jugador_disparar(tJugador *jugador)
-{
-    if(!disparo->activo)
+    if(direccion == IZQUIERDA || direccion == DERECHA)
     {
-        disparo->x = jugador->x;
-        disparo->y = jugador->y;
-        disparo->activo = 1;
+        resultante = jugador->x + direccion * VELOCIDAD_JUGADOR;
+
+        if(resultante >= 0 && resultante <= VENTANA_X - ANCHO_JUGADOR)
+        {
+            jugador->x = resultante;
+        }
     }
 }
+
 
 
 
