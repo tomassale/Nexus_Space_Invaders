@@ -1,6 +1,6 @@
 #include "main.h"
 
-#define WIN_W 800
+#define WIN_W 820
 #define WIN_H 920
 
 int main(int argc, char *argv[])
@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 
     float delta;
 
-    if(!motorCrear("Space Invaders", WIN_H, WIN_W) )
+    if(!motorCrear("Space Invaders - Nexus", WIN_H, WIN_W) )
         return 1;
 
     if(!gameCrear(motorRenderizador()))

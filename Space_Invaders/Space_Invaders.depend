@@ -1,14 +1,15 @@
 # depslib dependency file v1.0
-1791771504 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\main.c
+1791831511 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\main.c
 	"main.h"
 
-1791763189 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\main.h
-	"src/motor.h"
-	"src/game.h"
+1791822229 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\main.h
+	"src/engine/motor.h"
+	"src/game/game.h"
 
-1791771544 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\motor.h
+1791815748 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\motor.h
 	<stdbool.h>
 	<SDL.h>
+	<SDL_image.h>
 
 1789579765 d:\facultad\2起a隳\topicos_de_programacion\nexus\sdl_dev_lib\include\sdl2\sdl.h
 	"SDL_main.h"
@@ -452,7 +453,7 @@
 	"begin_code.h"
 	"close_code.h"
 
-1791771536 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game.h
+1791822089 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game.h
 	<stdbool.h>
 	<SDL.h>
 
@@ -481,7 +482,7 @@
 
 1790199789 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\recursos.h
 
-1791761782 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\motor.c
+1791816966 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\motor.c
 	"motor.h"
 
 1791757640 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\recursos.c
@@ -491,4 +492,64 @@
 	"mapa.h"
 	"recursos.h"
 	"motor.h"
+
+1791816202 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\sdl_image\include\sdl2\sdl_image.h
+	"SDL.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
+
+1791816966 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.c
+	"motor.h"
+
+1791815748 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.h
+	<stdbool.h>
+	<SDL.h>
+	<SDL_image.h>
+
+1791828530 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.h
+	<stdbool.h>
+	<SDL.h>
+
+1791831414 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\jugador.c
+	"jugador.h"
+
+1791758798 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\jugador.h
+
+1791831580 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.c
+	<SDL.h>
+	<stdbool.h>
+	"game.h"
+	"jugador/jugador.h"
+	"jugador/disparo.h"
+	"../engine/sprites.h"
+
+1791760732 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\disparo.h
+
+1791826218 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\sprites.c
+	<SDL_image.h>
+	"sprites.h"
+
+1791826239 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\sprites.h
+	<SDL.h>
+	<stdbool.h>
+
+1791822398 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\mapa\mapa.c
+	<SDL.h>
+	"mapa.h"
+	"../game.h"
+	"../jugador/jugador.h"
+	"../recursos/recursos.h"
+
+1790199789 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\mapa\mapa.h
+
+1790199789 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\recursos\recursos.h
+
+1791822398 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\recursos\recursos.c
+	<SDL.h>
+	"recursos.h"
+	"../game.h"
+	"../jugador/jugador.h"
+	"../mapa/mapa.h"
+	"../../engine/motor.h"
 

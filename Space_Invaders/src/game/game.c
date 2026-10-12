@@ -2,16 +2,17 @@
 #include <stdbool.h>
 
 #include "game.h"
-#include "jugador.h"
-#include "disparo.h"
+#include "jugador/jugador.h"
+#include "jugador/disparo.h"
+#include "../engine/sprites.h"
 
-#define ANCHO_JUGADOR 40
+#define ANCHO_JUGADOR 20
 #define ALTO_JUGADOR 10
 
-#define ANCHO_DISPARO 4
+#define ANCHO_DISPARO 2
 #define ALTO_DISPARO 10
 
-#define DESPLAZAMIENTO_CANNON_X 20
+#define DESPLAZAMIENTO_CANNON_X ((ANCHO_JUGADOR)/2)-((ANCHO_DISPARO)/2)
 
 #define VELOCIDAD_DISPARO_JUGADOR 8
 #define VELOCIDAD_DISPARO_ENEMIGO 5
@@ -24,12 +25,17 @@
 
 static bool ejecutando = false;
 
+static tSprite sprFondo;
 static tJugador jugador;
 static tDisparo disparoJugador;
 static tDisparo disparoEnemigo;
+static tSprite sprJugador;
+//static tSprite sprEscudos;
+//static tSprite sprEnemigos;
 
 /*** FUNCIONES PRIVADAS ***/
 
+//Jugador
 static void disparo_mover(tDisparo *disparo, int direccion, int velocidad)
 {
     disparo->y += direccion * velocidad;
@@ -88,6 +94,15 @@ static void game_actualizar_disparos(void)
         }
     }
 }
+/*
+//Mapa
+static void gameMapa(){}
+
+//Recursos
+static void gameEscudos(){}
+static void gameScore(){}
+static void gamePause(){}
+*/
 
 /*** FUNCIONES PUBLICAS ***/
 
@@ -95,11 +110,18 @@ bool gameCrear(SDL_Renderer *render)
 {
     (void)render;
 
-    jugador_iniciar(&jugador);
 
+
+    if(!spriteCargar(&sprJugador, render, "assets/jugador.png", 1, 0) ||
+       !spriteCargar(&sprFondo, render, "assets/fondo.jpg", 1, 0))
+    {
+        gameDestruir();
+        return false;
+    }
+
+    jugador_iniciar(&jugador);
     disparoJugador.activo = 0;
     disparoEnemigo.activo = 0;
-
     ejecutando = true;
 
     return true;
@@ -123,6 +145,7 @@ void gameProcesarEventos(void)
             if(evento.key.keysym.sym == SDLK_SPACE)
                 game_disparar_jugador();
         }
+
     }
 }
 
@@ -145,15 +168,16 @@ void gameDibujar(SDL_Renderer *render)
 {
     SDL_Rect rect;
 
+    /*Dibujar fondo*/
+    spriteDibujar(render, &sprFondo, 0, 0, VENTANA_X, VENTANA_Y);
+
     /* Dibujar jugador */
-    SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
+    spriteDibujar(render, &sprJugador, jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
 
     rect.x = jugador.x;
     rect.y = jugador.y;
     rect.w = ANCHO_JUGADOR;
     rect.h = ALTO_JUGADOR;
-
-    SDL_RenderFillRect(render, &rect);
 
     /* Dibujar disparo del jugador */
     if(disparoJugador.activo)
@@ -189,5 +213,9 @@ bool gameEjecutando(void)
 
 void gameDestruir(void)
 {
+    spriteLiberar(&sprFondo);
+    spriteLiberar(&sprJugador);
+    //spriteLiberar(&sprEnemigos);
+    //spriteLiberar(&sprEscudos);
     ejecutando = false;
 }
