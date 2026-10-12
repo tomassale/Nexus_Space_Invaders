@@ -1,4 +1,3 @@
-//#include <SDL_image.h>
 #include "motor.h"
 #define FPS 60
 #define FRAME_TIME (1000 / FPS)
@@ -17,19 +16,30 @@ static bool inicializarSDL(void)
 {
     if(SDL_Init(SDL_INIT_VIDEO) < 0)
         return false;
-    /*if(!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)
+    if(!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG))
     {
         SDL_Quit();
         return false;
-    }*/
+    }
 
     return true;
 }
 
 static void cerrarSDL(void)
 {
-    //IMG_Quit();
+    IMG_Quit();
     SDL_Quit();
+}
+
+static void crearIcono(const char *ruta)
+{
+    SDL_Surface *icono = IMG_Load(ruta);
+
+    if(icono)
+    {
+        SDL_SetWindowIcon(ventana, icono);
+        SDL_FreeSurface(icono);
+    }
 }
 
 static bool crearVentana(const char* titulo)
@@ -38,6 +48,8 @@ static bool crearVentana(const char* titulo)
 
     if(ventana == NULL)
         return false;
+
+    crearIcono("assets/icon.png");
 
     return true;
 }
