@@ -1,5 +1,5 @@
 # Requisito de entrega
-bin/
+Space_Invaders/bin/
 obj/
 *.o
 *.exe
