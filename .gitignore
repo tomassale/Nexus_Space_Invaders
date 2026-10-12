@@ -1,0 +1,7 @@
+# Requisito de entrega
+bin/
+obj/
+*.o
+*.exe
+*.depend
+*.layout

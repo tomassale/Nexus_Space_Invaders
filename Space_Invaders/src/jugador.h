@@ -1,5 +1,5 @@
-#ifndef JUGADOR_H_INCLUDED
-#define JUGADOR_H_INCLUDED
+#ifndef JUGADOR_H
+#define JUGADOR_H
 
 typedef struct
 {
@@ -7,13 +7,9 @@ typedef struct
     int y;
     int vidas;
     int puntaje;
-}tJugador;
+} tJugador;
 
-typedef struct
-{
-    int x;
-    int y;
-    int activo;
-}tDisparo;
+void jugador_iniciar(tJugador *jugador);
+void jugador_mover(tJugador *jugador, int direccion);
 
-#endif // JUGADOR_H_INCLUDED
+#endif
