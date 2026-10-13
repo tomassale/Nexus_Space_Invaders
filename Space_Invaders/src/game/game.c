@@ -3,6 +3,7 @@
 #include "game.h"
 #include "jugador/jugador.h"
 #include "jugador/disparo.h"
+#include "mapa/mapa.h"
 #include "../engine/sprites.h"
 #include "../engine/audio.h"
 #include "../engine/fonts.h"
@@ -26,13 +27,14 @@
 
 static bool ejecutando = false;
 static int puntaje;
+static int ronda;
 
 static tJugador jugador;
 static tDisparo disparoJugador;
 static tDisparo disparoEnemigo;
 
-static tSprite sprFondo;
-static tSprite sprJugador;
+static tSprite sprFondo = {0};
+static tSprite sprJugador = {0};
 //static tSprite sprEscudos;
 //static tSprite sprEnemigos;
 
@@ -147,6 +149,16 @@ bool gameCrear(SDL_Renderer *render)
     disparoJugador.activo = 0;
     disparoEnemigo.activo = 0;
     puntaje = 0;
+    ronda = 1;
+
+    if(!mapa_sprites_cargar(render))
+    {
+        gameDestruir();
+        return false;
+    }
+
+    mapa_enemigos_iniciar();
+    mapa_escudos_iniciar();
     ejecutando = true;
 
     return true;
@@ -200,8 +212,11 @@ void gameDibujar(SDL_Renderer *render)
     SDL_Color blanco = {255, 255, 255, 255};
     char buf[32];
 
-    snprintf(buf, sizeof(buf), "SCORE %05d", puntaje);
+    snprintf(buf, sizeof(buf), "HIGH SCORE %05d", puntaje);
     fuenteDibujar(render, fntPuntaje, buf, 8, 4, blanco);
+
+    snprintf(buf, sizeof(buf), "1UP ROUND %02d", ronda);
+    fuenteDibujar(render, fntPuntaje, buf, 8, 17, blanco);
 
     /* Dibujar jugador */
     spriteDibujar(render, &sprJugador, jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
@@ -210,6 +225,12 @@ void gameDibujar(SDL_Renderer *render)
     rect.y = jugador.y;
     rect.w = ANCHO_JUGADOR;
     rect.h = ALTO_JUGADOR;
+
+    /* Dibujar enemigos */
+    mapa_enemigos_dibujar(render);
+
+    /* Dibujar escudos */
+    mapa_escudos_dibujar(render);
 
     /* Dibujar disparo del jugador */
     if(disparoJugador.activo)
@@ -249,6 +270,8 @@ void gameDestruir(void)
     spriteLiberar(&sprJugador);
     //spriteLiberar(&sprEnemigos);
     //spriteLiberar(&sprEscudos);
+
+    mapa_sprites_liberar();
 
     sonidoLiberar(sndDisparoJugador);
     //sonidoLiberar(sndDisparoEnemigo);
