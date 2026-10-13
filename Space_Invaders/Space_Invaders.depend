@@ -514,16 +514,17 @@
 	<stdio.h>
 	<SDL.h>
 
-1791831414 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\jugador.c
+1791913593 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\jugador.c
 	"jugador.h"
 
 1791758798 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\jugador.h
 
-1791857993 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.c
+1791911499 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.c
 	<stdbool.h>
 	"game.h"
 	"jugador/jugador.h"
 	"jugador/disparo.h"
+	"mapa/mapa.h"
 	"../engine/sprites.h"
 	"../engine/audio.h"
 	"../engine/fonts.h"
@@ -538,14 +539,16 @@
 	<SDL.h>
 	<stdbool.h>
 
-1791822398 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\mapa\mapa.c
+1791911499 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\mapa\mapa.c
 	<SDL.h>
 	"mapa.h"
 	"../game.h"
 	"../jugador/jugador.h"
 	"../recursos/recursos.h"
+	"../../engine/sprites.h"
 
-1790199789 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\mapa\mapa.h
+1791911499 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\mapa\mapa.h
+	<stdbool.h>
 
 1790199789 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\recursos\recursos.h
 
