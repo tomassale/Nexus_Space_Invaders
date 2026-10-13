@@ -49,7 +49,7 @@ static bool crearVentana(const char* titulo)
     if(ventana == NULL)
         return false;
 
-    crearIcono("assets/icon.png");
+    crearIcono("assets/images/icon.png");
 
     return true;
 }
@@ -80,6 +80,7 @@ static void liberarRecursos(void)
         ventana = NULL;
     }
 
+    audioDestruir();
     cerrarSDL();
 }
 
@@ -106,6 +107,9 @@ bool motorCrear(const char* titulo, int an, int al)
         liberarRecursos();
         return false;
     }
+
+    if(!audioCrear())
+        SDL_Log("Sin audio, el juego sigue sin sonido");
 
     tiempo_anterior=SDL_GetTicks();
     return true;

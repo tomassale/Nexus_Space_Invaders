@@ -1,6 +1,6 @@
 # Requisito de entrega
 Space_Invaders/bin/
-obj/
+Space_Invaders/obj/
 *.o
 *.exe
 *.depend
