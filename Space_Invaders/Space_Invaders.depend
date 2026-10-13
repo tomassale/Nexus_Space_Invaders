@@ -499,17 +499,19 @@
 	"begin_code.h"
 	"close_code.h"
 
-1791854415 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.c
+1791857416 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.c
 	"motor.h"
 
-1791854249 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.h
+1791856892 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.h
 	<stdbool.h>
 	<SDL.h>
 	<SDL_image.h>
 	"audio.h"
+	"fonts.h"
 
-1791828530 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.h
+1791857416 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.h
 	<stdbool.h>
+	<stdio.h>
 	<SDL.h>
 
 1791831414 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\jugador.c
@@ -517,14 +519,14 @@
 
 1791758798 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\jugador.h
 
-1791854336 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.c
-	<SDL.h>
+1791857993 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.c
 	<stdbool.h>
 	"game.h"
 	"jugador/jugador.h"
 	"jugador/disparo.h"
 	"../engine/sprites.h"
 	"../engine/audio.h"
+	"../engine/fonts.h"
 
 1791760732 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\disparo.h
 
@@ -571,4 +573,17 @@
 	"SDL_version.h"
 	"begin_code.h"
 	"close_code.h"
+
+1791857488 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\fonts.h
+	<SDL.h>
+	<SDL_ttf.h>
+	<stdbool.h>
+
+1791816203 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\sdl_ttf\include\sdl2\sdl_ttf.h
+	"SDL.h"
+	"begin_code.h"
+	"close_code.h"
+
+1791857634 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\fonts.c
+	"fonts.h"
 

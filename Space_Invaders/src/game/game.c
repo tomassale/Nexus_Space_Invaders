@@ -1,4 +1,3 @@
-#include <SDL.h>
 #include <stdbool.h>
 
 #include "game.h"
@@ -6,6 +5,7 @@
 #include "jugador/disparo.h"
 #include "../engine/sprites.h"
 #include "../engine/audio.h"
+#include "../engine/fonts.h"
 
 #define ANCHO_JUGADOR 20
 #define ALTO_JUGADOR 10
@@ -25,6 +25,7 @@
 /*** VARIABLES PRIVADAS ***/
 
 static bool ejecutando = false;
+static int puntaje;
 
 static tJugador jugador;
 static tDisparo disparoJugador;
@@ -40,6 +41,8 @@ static tSonido *sndDisparoJugador;
 //static tSonido *sndDisparoEnemigo;
 //static tSonido *sndFinalNivel;
 //static tSonido *sndNaveBajando;
+
+static tFuente *fntPuntaje;
 
 /*** FUNCIONES PRIVADAS ***/
 
@@ -119,6 +122,7 @@ bool gameCrear(SDL_Renderer *render)
 {
     audioVolumen(30);
     sndDisparoJugador = sonidoCargar("assets/audio/disparo_jugador.wav");
+    fntPuntaje = fuenteCargar("assets/fonts/space_invaders.ttf", 8);
 
     if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
        !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
@@ -133,9 +137,16 @@ bool gameCrear(SDL_Renderer *render)
         return false;
     }
 
+    if(!fntPuntaje)
+    {
+        gameDestruir();
+        return false;
+    }
+
     jugador_iniciar(&jugador);
     disparoJugador.activo = 0;
     disparoEnemigo.activo = 0;
+    puntaje = 0;
     ejecutando = true;
 
     return true;
@@ -184,6 +195,13 @@ void gameDibujar(SDL_Renderer *render)
 
     /*Dibujar fondo*/
     spriteDibujar(render, &sprFondo, 0, 0, VENTANA_X, VENTANA_Y);
+
+    /*Dibujar puntaje*/
+    SDL_Color blanco = {255, 255, 255, 255};
+    char buf[32];
+
+    snprintf(buf, sizeof(buf), "SCORE %05d", puntaje);
+    fuenteDibujar(render, fntPuntaje, buf, 8, 4, blanco);
 
     /* Dibujar jugador */
     spriteDibujar(render, &sprJugador, jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
@@ -241,6 +259,9 @@ void gameDestruir(void)
     //sndDisparoEnemigo = NULL;
     //sndFinalNivel = NULL;
     //sndNaveBajando = NULL;
+
+    fuenteLiberar(fntPuntaje);
+    fntPuntaje = NULL;
 
     ejecutando = false;
 }

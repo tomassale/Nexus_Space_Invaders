@@ -81,6 +81,7 @@ static void liberarRecursos(void)
     }
 
     audioDestruir();
+    fuentesDestruir();
     cerrarSDL();
 }
 
@@ -110,6 +111,9 @@ bool motorCrear(const char* titulo, int an, int al)
 
     if(!audioCrear())
         SDL_Log("Sin audio, el juego sigue sin sonido");
+
+    if(!fuentesCrear())
+        SDL_Log("Sin fuentes");
 
     tiempo_anterior=SDL_GetTicks();
     return true;
