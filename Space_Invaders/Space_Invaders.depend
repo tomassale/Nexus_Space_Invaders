@@ -499,13 +499,14 @@
 	"begin_code.h"
 	"close_code.h"
 
-1791816966 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.c
+1791854415 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.c
 	"motor.h"
 
-1791815748 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.h
+1791854249 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\motor.h
 	<stdbool.h>
 	<SDL.h>
 	<SDL_image.h>
+	"audio.h"
 
 1791828530 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.h
 	<stdbool.h>
@@ -516,13 +517,14 @@
 
 1791758798 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\jugador.h
 
-1791831580 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.c
+1791854336 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\game.c
 	<SDL.h>
 	<stdbool.h>
 	"game.h"
 	"jugador/jugador.h"
 	"jugador/disparo.h"
 	"../engine/sprites.h"
+	"../engine/audio.h"
 
 1791760732 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\game\jugador\disparo.h
 
@@ -530,7 +532,7 @@
 	<SDL_image.h>
 	"sprites.h"
 
-1791826239 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\sprites.h
+1791851031 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\sprites.h
 	<SDL.h>
 	<stdbool.h>
 
@@ -552,4 +554,21 @@
 	"../jugador/jugador.h"
 	"../mapa/mapa.h"
 	"../../engine/motor.h"
+
+1791853261 source:d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\audio.c
+	"audio.h"
+
+1791853737 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\src\engine\audio.h
+	<SDL.h>
+	<SDL_mixer.h>
+	<stdbool.h>
+
+1791816203 d:\facultad\2起a隳\topicos_de_programacion\nexus\space_invaders\sdl_mixer\include\sdl2\sdl_mixer.h
+	"SDL_stdinc.h"
+	"SDL_rwops.h"
+	"SDL_audio.h"
+	"SDL_endian.h"
+	"SDL_version.h"
+	"begin_code.h"
+	"close_code.h"
 

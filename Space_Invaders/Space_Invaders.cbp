@@ -36,9 +36,21 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="sdl_image/include/SDL2" />
+					<Add directory="sdl_mixer/include/SDL2" />
+					<Add directory="sdl_ttf/include/SDL2" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add library="mingw32" />
+					<Add library="SDL2main" />
+					<Add library="SDL2" />
+					<Add library="SDL2_image" />
+					<Add library="SDL2_ttf" />
+					<Add library="SDL2_mixer" />
+					<Add directory="sdl_image/lib" />
+					<Add directory="sdl_mixer/lib" />
+					<Add directory="sdl_ttf/lib" />
 				</Linker>
 			</Target>
 		</Build>
@@ -54,27 +66,35 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="main.h" />
-		<Unit filename="src/disparo.h" />
+		<Unit filename="src/engine/audio.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/engine/audio.h" />
 		<Unit filename="src/engine/motor.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/engine/motor.h" />
-		<Unit filename="src/game.c">
+		<Unit filename="src/engine/sprites.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/game.h" />
-		<Unit filename="src/jugador.c">
+		<Unit filename="src/engine/sprites.h" />
+		<Unit filename="src/game/game.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/jugador.h" />
-		<Unit filename="src/mapa.c">
+		<Unit filename="src/game/game.h" />
+		<Unit filename="src/game/jugador/disparo.h" />
+		<Unit filename="src/game/jugador/jugador.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/mapa.h" />
-		<Unit filename="src/recursos.c">
+		<Unit filename="src/game/jugador/jugador.h" />
+		<Unit filename="src/game/mapa/mapa.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/recursos.h" />
+		<Unit filename="src/game/mapa/mapa.h" />
+		<Unit filename="src/game/recursos/recursos.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/game/recursos/recursos.h" />
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

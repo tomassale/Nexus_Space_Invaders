@@ -5,6 +5,7 @@
 #include "jugador/jugador.h"
 #include "jugador/disparo.h"
 #include "../engine/sprites.h"
+#include "../engine/audio.h"
 
 #define ANCHO_JUGADOR 20
 #define ALTO_JUGADOR 10
@@ -25,13 +26,20 @@
 
 static bool ejecutando = false;
 
-static tSprite sprFondo;
 static tJugador jugador;
 static tDisparo disparoJugador;
 static tDisparo disparoEnemigo;
+
+static tSprite sprFondo;
 static tSprite sprJugador;
 //static tSprite sprEscudos;
 //static tSprite sprEnemigos;
+
+static tSonido *sndDisparoJugador;
+//static tSonido *sndExplosion;
+//static tSonido *sndDisparoEnemigo;
+//static tSonido *sndFinalNivel;
+//static tSonido *sndNaveBajando;
 
 /*** FUNCIONES PRIVADAS ***/
 
@@ -64,6 +72,7 @@ static void game_disparar_jugador(void)
             jugador.y - ALTO_DISPARO;
 
         disparoJugador.activo = 1;
+        sonidoReproducir(sndDisparoJugador);
     }
 }
 
@@ -108,12 +117,17 @@ static void gamePause(){}
 
 bool gameCrear(SDL_Renderer *render)
 {
-    (void)render;
+    audioVolumen(30);
+    sndDisparoJugador = sonidoCargar("assets/audio/disparo_jugador.wav");
 
+    if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
+       !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
+    {
+        gameDestruir();
+        return false;
+    }
 
-
-    if(!spriteCargar(&sprJugador, render, "assets/jugador.png", 1, 0) ||
-       !spriteCargar(&sprFondo, render, "assets/fondo.jpg", 1, 0))
+    if(!sndDisparoJugador)
     {
         gameDestruir();
         return false;
@@ -217,5 +231,16 @@ void gameDestruir(void)
     spriteLiberar(&sprJugador);
     //spriteLiberar(&sprEnemigos);
     //spriteLiberar(&sprEscudos);
+
+    sonidoLiberar(sndDisparoJugador);
+    //sonidoLiberar(sndDisparoEnemigo);
+    //sonidoLiberar(sndFinalNivel);
+    //sonidoLiberar(sndNaveBajando);
+
+    sndDisparoJugador = NULL;
+    //sndDisparoEnemigo = NULL;
+    //sndFinalNivel = NULL;
+    //sndNaveBajando = NULL;
+
     ejecutando = false;
 }
