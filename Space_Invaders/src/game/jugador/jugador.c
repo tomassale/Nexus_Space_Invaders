@@ -33,8 +33,3 @@ void jugador_mover(tJugador *jugador, int direccion)
         }
     }
 }
-
-
-
-
-
