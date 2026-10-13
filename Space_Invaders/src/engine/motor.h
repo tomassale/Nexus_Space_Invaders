@@ -5,6 +5,7 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include "audio.h"
+#include "fonts.h"
 
 bool motorCrear(const char* titulo, int an, int al);
 void motorLimpiar(void);

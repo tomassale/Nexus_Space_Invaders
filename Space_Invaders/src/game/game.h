@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <SDL.h>
 
 bool gameCrear(SDL_Renderer *render);

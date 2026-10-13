@@ -70,6 +70,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/engine/audio.h" />
+		<Unit filename="src/engine/fonts.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/engine/fonts.h" />
 		<Unit filename="src/engine/motor.c">
 			<Option compilerVar="CC" />
 		</Unit>
