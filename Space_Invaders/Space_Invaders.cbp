@@ -78,6 +78,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/engine/motor.h" />
+		<Unit filename="src/engine/vector.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/engine/vector.h" />
 		<Unit filename="src/engine/sprites.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -87,6 +91,10 @@
 		</Unit>
 		<Unit filename="src/game/game.h" />
 		<Unit filename="src/game/jugador/disparo.h" />
+		<Unit filename="src/game/jugador/bala.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="src/game/jugador/bala.h" />
 		<Unit filename="src/game/jugador/jugador.c">
 			<Option compilerVar="CC" />
 		</Unit>
