@@ -3,9 +3,9 @@
 
 #include <SDL.h>
 
-#define BALA_ANCHO 4
-#define BALA_ALTO 12
-#define BALA_VEL_JUGADOR  7
+#define BALA_ANCHO 2
+#define BALA_ALTO 5
+#define BALA_VEL_JUGADOR  5
 #define BALA_VEL_ENEMIGO  4
 
 typedef struct

@@ -8,8 +8,15 @@
 #include "../engine/audio.h"
 #include "../engine/fonts.h"
 
+#include "jugador/bala.h"
+#include "../engine/vector.h"
+
 #define ANCHO_JUGADOR 20
 #define ALTO_JUGADOR 10
+
+//#define JUGADOR_ANCHO 20
+//#define JUGADOR_ALTO 10
+
 
 #define ANCHO_DISPARO 2
 #define ALTO_DISPARO 10
@@ -29,9 +36,11 @@ static bool ejecutando = false;
 static int puntaje;
 static int ronda;
 
+
 static tJugador jugador;
-static tDisparo disparoJugador;
+static Vector vBalasJugador;
 static tDisparo disparoEnemigo;
+
 
 static tSprite sprFondo = {0};
 static tSprite sprJugador = {0};
@@ -54,42 +63,26 @@ static void disparo_mover(tDisparo *disparo, int direccion, int velocidad)
     disparo->y += direccion * velocidad;
 }
 
-static int disparo_colision(tDisparo *j, tDisparo *e)
-{
-    int colision = 0;
-
-    if(j->x < e->x + ANCHO_DISPARO && j->x + ANCHO_DISPARO > e->x && j->y < e->y + ALTO_DISPARO && j->y + ALTO_DISPARO > e->y)
-    {
-        colision = 1;
-    }
-
-    return colision;
-}
 
 static void game_disparar_jugador(void)
 {
-    if(!disparoJugador.activo)
-    {
-        disparoJugador.x =
-            jugador.x + DESPLAZAMIENTO_CANNON_X;
+    if(VectorCE(&vBalasJugador) != 0)
+        return;
 
-        disparoJugador.y =
-            jugador.y - ALTO_DISPARO;
+    Bala bala;
+    int x = jugador.x + (ANCHO_JUGADOR / 2) - (BALA_ANCHO / 2);
+    int y = jugador.y - BALA_ALTO;
 
-        disparoJugador.activo = 1;
-        sonidoReproducir(sndDisparoJugador);
-    }
+    bala_crear(&bala, x, y);
+    vectorInsertarAlFinal(&vBalasJugador, &bala);
+
+    sonidoReproducir(sndDisparoJugador);
 }
 
 static void game_actualizar_disparos(void)
 {
-    if(disparoJugador.activo)
-    {
-        disparo_mover(&disparoJugador,-1,VELOCIDAD_DISPARO_JUGADOR);
-
-        if(disparoJugador.y + ALTO_DISPARO < 0)
-            disparoJugador.activo = 0;
-    }
+    vectorMap(&vBalasJugador, bala_mover_jugador, NULL);
+    vectorFilter(&vBalasJugador, bala_en_pantalla, NULL);
 
     if(disparoEnemigo.activo)
     {
@@ -99,15 +92,9 @@ static void game_actualizar_disparos(void)
             disparoEnemigo.activo = 0;
     }
 
-    if(disparoJugador.activo && disparoEnemigo.activo)
-    {
-        if(disparo_colision(&disparoJugador, &disparoEnemigo))
-        {
-            disparoJugador.activo = 0;
-            disparoEnemigo.activo = 0;
-        }
-    }
 }
+
+
 /*
 //Mapa
 static void gameMapa(){}
@@ -127,7 +114,7 @@ bool gameCrear(SDL_Renderer *render)
     fntPuntaje = fuenteCargar("assets/fonts/space_invaders.ttf", 8);
 
     if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
-       !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
+            !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
     {
         gameDestruir();
         return false;
@@ -146,10 +133,15 @@ bool gameCrear(SDL_Renderer *render)
     }
 
     jugador_iniciar(&jugador);
-    disparoJugador.activo = 0;
     disparoEnemigo.activo = 0;
     puntaje = 0;
     ronda = 1;
+
+    if(!vectorCrear(&vBalasJugador, 8, sizeof(Bala)))
+    {
+        gameDestruir();
+        return false;
+    }
 
     if(!mapa_sprites_cargar(render))
     {
@@ -174,7 +166,7 @@ void gameProcesarEventos(void)
             ejecutando = false;
 
         if(evento.type == SDL_KEYDOWN &&
-           evento.key.repeat == 0)
+                evento.key.repeat == 0)
         {
             if(evento.key.keysym.sym == SDLK_ESCAPE)
                 ejecutando = false;
@@ -233,17 +225,7 @@ void gameDibujar(SDL_Renderer *render)
     mapa_escudos_dibujar(render);
 
     /* Dibujar disparo del jugador */
-    if(disparoJugador.activo)
-    {
-        SDL_SetRenderDrawColor(render, 255, 255, 255, 255);
-
-        rect.x = disparoJugador.x;
-        rect.y = disparoJugador.y;
-        rect.w = ANCHO_DISPARO;
-        rect.h = ALTO_DISPARO;
-
-        SDL_RenderFillRect(render, &rect);
-    }
+    vectorMap(&vBalasJugador, bala_dibujar, render);
 
     /* Dibujar disparo enemigo */
     if(disparoEnemigo.activo)
@@ -282,6 +264,8 @@ void gameDestruir(void)
     //sndDisparoEnemigo = NULL;
     //sndFinalNivel = NULL;
     //sndNaveBajando = NULL;
+
+     vectorDestruir(&vBalasJugador);
 
     fuenteLiberar(fntPuntaje);
     fntPuntaje = NULL;

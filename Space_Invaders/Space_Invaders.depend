@@ -1608,7 +1608,7 @@
 	"begin_code.h"
 	"close_code.h"
 
-1791941758 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\engine\motor.c
+1792009471 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\engine\motor.c
 	"motor.h"
 
 1791941758 c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\engine\motor.h
@@ -1632,7 +1632,7 @@
 	<SDL.h>
 	<stdbool.h>
 
-1791941758 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\game.c
+1792010159 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\game.c
 	<stdbool.h>
 	"game.h"
 	"jugador/jugador.h"
@@ -1641,6 +1641,8 @@
 	"../engine/sprites.h"
 	"../engine/audio.h"
 	"../engine/fonts.h"
+	"jugador/bala.h"
+	"../engine/vector.h"
 
 1791941758 c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\game.h
 	<stdbool.h>
@@ -1675,10 +1677,26 @@
 	"../mapa/mapa.h"
 	"../../engine/motor.h"
 
-1791941941 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\main.c
+1791997274 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\main.c
 	"main.h"
 
 1791941758 c:\dev\topicos\api\nexus_space_invaders\space_invaders\main.h
 	"src/engine/motor.h"
 	"src/game/game.h"
+
+1791942493 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\jugador\bala.c
+	"bala.h"
+	"../../engine/motor.h"
+
+1792009532 c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\jugador\bala.h
+	<SDL.h>
+
+1791995572 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\engine\vector.c
+	"vector.h"
+
+1791995549 c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\engine\vector.h
+	<stdlib.h>
+	<stdio.h>
+	<stdbool.h>
+	<string.h>
 
