@@ -13,23 +13,44 @@
 
 typedef struct
 {
-    void *vec; // puntero generico al bloque de memoria donde estan los datos
-    size_t ce;// cantidad actual de elementos insertados
-    size_t tamElem; // tama�o en bytes que ocupa cada elemento
-    size_t capacidad; // cacidad maxima de elementos que el vector puede almacenar (sin realloc)
+    void *vec;
+    size_t ce;
+    size_t tamElem;
+    size_t capacidad;
 } Vector;
 
-int Vector_create(Vector *v, size_t capacidad, size_t tamElem);
-void Vector_destroy(Vector *v);
-int Vector_length(Vector *v);
-int vector_resize(Vector *v, size_t nuevaCap);
-int Vector_pushback(Vector *v, const void *d);
+//Puntero a funcion
+typedef int (*Cmp)(const void *, const void *);
+typedef int (*Accion)(void *elem, void *datos);
+typedef int (*Condicion)(const void *elem, void *datos);
+typedef void (*Imprimir)(const void *a);
 
-Vector *Vector_map(Vector *v, int action(void *, void *), void *contexto);
-int Vector_filter(Vector *v, int ffiltro(const void *, void *), void *contexto);
+// Ciclo vida
+int vectorCrear(Vector *v, size_t capacidad, size_t tamElem);
+void vectorDestruir(Vector *v);
+void vectorVaciar(Vector *v);
+int vectorRedimensionar(Vector *v, size_t nuevaCap);
 
-int Vector_SortInsert(Vector *v, const void *elem, int cmp(const void*, const void *));
-int Vector_ssearch(Vector *v, void *elem, int cmp(const void*, const void *));
-int vector_update(Vector *v, void *elem, int cmp(const void*, const void *));
+// Busquedas y actualizaciones
+int VectorSsearch(Vector *v, void *elem, int cmp(const void*, const void *));
+int vectorUpdate(Vector *v, void *elem, int cmp(const void*, const void *));
+
+// Inserciones
+int vectorInsertarAlFinal(Vector *v, const void *d);
+int vectorInsertarOrdenado(Vector *v, const void *elem, int cmp(const void*, const void *));
+
+// Recorridos
+Vector *vectorMap(Vector *v, Accion accion, void *dato);
+int vectorFilter(Vector *v, int ffiltro(const void *elem, void *dato), void *dato);
+
+// Ordenamiento
+void vectorQsort(Vector *v, int cmp(const void*, const void*));
+void vectorOrdenarSeleccion(Vector *v, int cmp(const void *, const void*));
+void *buscarMenor(void *ini, void *fin, size_t tamElem, int cmp(const void*, const void*));
+
+// Varios
+int vectorVacio(Vector *v);
+int VectorCE(Vector *v);
+void intercambiar(void *a, void *b, size_t tamElem);
 
 #endif // VECTOR_H_INCLUDED

@@ -1,6 +1,7 @@
 #include "vector.h"
 
-int Vector_create(Vector *v, size_t capacidad, size_t tamElem)
+// Ciclo vida vector
+int vectorCrear(Vector *v, size_t capacidad, size_t tamElem)
 {
     v->vec = malloc(tamElem * capacidad);
     if(!v->vec)
@@ -13,17 +14,17 @@ int Vector_create(Vector *v, size_t capacidad, size_t tamElem)
     return 1;
 }
 
-void Vector_destroy(Vector *v)
+void vectorDestruir(Vector *v)
 {
     free(v->vec);
 }
 
-int Vector_length(Vector *v)
+void vectorVaciar(Vector *v)
 {
-    return v->ce;
+    v->ce = 0;
 }
 
-int vector_resize(Vector *v, size_t nuevaCap)
+int vectorRedimensionar(Vector *v, size_t nuevaCap)
 {
     void *tmp = realloc(v->vec, v->tamElem * nuevaCap);
     if(tmp == NULL)
@@ -35,11 +36,55 @@ int vector_resize(Vector *v, size_t nuevaCap)
     return 1;
 }
 
-int Vector_pushback(Vector *v, const void *d)
+// Busquedas y actualizaciones
+int VectorSsearch(Vector *v, void *elem, int cmp(const void*, const void *))
+{
+    if(v->ce == 0)
+        return 0;
+
+    void *i = v->vec;
+    void *ult = v->vec + (v->ce - 1) * v->tamElem;
+
+    while(i <= ult && cmp(elem, i) != 0)
+    {
+        i += v->tamElem;
+    }
+
+    if(i > ult)
+        return 0;
+
+    memcpy(elem, i, v->tamElem);
+
+    return 1;
+}
+
+int vectorUpdate(Vector *v, void *elem, int cmp(const void*, const void *))
+{
+    if(v->ce == 0)
+        return 0;
+
+    void *i = v->vec;
+    void *ult = v->vec + (v->ce - 1) * v->tamElem;
+
+    while(i <= ult && cmp(elem, i) != 0)
+    {
+        i += v->tamElem;
+    }
+
+    if(i > ult)
+        return 0;
+
+    memcpy(i, elem, v->tamElem);
+
+    return 1;
+}
+
+// Inserciones
+int vectorInsertarAlFinal(Vector *v, const void *d)
 {
     if(v->ce == v->capacidad)
     {
-        if(!vector_resize(v, v->capacidad * 2))
+        if(!vectorRedimensionar(v, v->capacidad * 2))
             return SIN_MEM;
     }
 
@@ -50,11 +95,11 @@ int Vector_pushback(Vector *v, const void *d)
     return TODO_OK;
 }
 
-int Vector_SortInsert(Vector *v, const void *elem, int cmp(const void*, const void *))
+int vectorInsertarOrdenado(Vector *v, const void *elem, int cmp(const void*, const void *))
 {
     if(v->ce == v->capacidad)
     {
-        if(!vector_resize(v, v->capacidad * 2))
+        if(!vectorRedimensionar(v, v->capacidad * 2))
             return SIN_MEM;
     }
 
@@ -73,57 +118,22 @@ int Vector_SortInsert(Vector *v, const void *elem, int cmp(const void*, const vo
     return TODO_OK;
 }
 
-int Vector_ssearch(Vector *v, void *elem, int cmp(const void*, const void *))
-{
-    void *i = v->vec;
-    void *ult = v->vec + (v->ce - 1) * v->tamElem;
-
-    while(i <= ult && cmp(elem, i) != 0)
-    {
-        i += v->tamElem;
-    }
-
-    if(i > ult)
-        return 0;
-
-    memcpy(elem, i, v->tamElem);
-
-    return 1;
-}
-
-int vector_update(Vector *v, void *elem, int cmp(const void*, const void *))
-{
-    void *i = v->vec;
-    void *ult = v->vec + (v->ce - 1) * v->tamElem;
-
-    while(i <= ult && cmp(elem, i) != 0)
-    {
-        i += v->tamElem;
-    }
-
-    if(i > ult)
-        return 0;
-
-    memcpy(i, elem, v->tamElem);
-
-    return 1;
-}
-
-Vector *Vector_map(Vector *v, int action(void *elem, void *ctx), void *contexto)
+// Recorridos
+Vector *vectorMap(Vector *v, int accion(void *e, void *d), void *datos)
 {
     void *lvec = v->vec;
     unsigned i;
 
     for(i = 0; i < v->ce; i++)
     {
-        action(lvec, contexto);
+        accion(lvec, datos);
         lvec += v->tamElem;
     }
 
     return v;
 }
 
-int Vector_filter(Vector *v, int ffiltro(const void *elem, void *ctx), void *contexto)
+int vectorFilter(Vector *v, int ffiltro(const void *elem, void *dato), void *dato)
 {
     char *pl = (char *)v->vec;
     char *pe = (char *)v->vec;
@@ -131,7 +141,7 @@ int Vector_filter(Vector *v, int ffiltro(const void *elem, void *ctx), void *con
 
     while(pl < fin)
     {
-        if(ffiltro(pl, contexto))
+        if(ffiltro(pl, dato))
         {
             memmove(pe, pl, v->tamElem);
             pl += v->tamElem;
@@ -145,4 +155,62 @@ int Vector_filter(Vector *v, int ffiltro(const void *elem, void *ctx), void *con
     }
 
     return TODO_OK;
+}
+
+// Ordenamiento
+void vectorQsort(Vector *v, int cmp(const void*, const void*))
+{
+    qsort(v->vec, v->ce, v->tamElem, cmp);
+}
+
+void vectorOrdenarSeleccion(Vector *v, int cmp(const void *, const void*))
+{
+    void *ult = (char *)v->vec + (v->ce - 1) * v->tamElem;
+    void *ini = v->vec;
+    void *men;
+
+    while(ini < ult)
+    {
+        men = buscarMenor(ini, ult, v->tamElem, cmp);
+        intercambiar(men, ini, v->tamElem);
+        ini = (char *)ini + v->tamElem;
+    }
+}
+
+void *buscarMenor(void *ini, void *fin, size_t tamElem, int cmp(const void*, const void*))
+{
+    void *men = ini;
+    ini = (char *)ini + tamElem;
+
+    while(ini <= fin)
+    {
+        if(cmp(ini, men) < 0)
+            men = ini;
+
+        ini = (char *)ini + tamElem;
+    }
+
+    return men;
+}
+
+void intercambiar(void *a, void *b, size_t tamElem)
+{
+    void *aux = malloc(tamElem);
+    if(!aux)
+        return;
+    memcpy(aux, a, tamElem);
+    memcpy(a, b, tamElem);
+    memcpy(b, aux, tamElem);
+    free(aux);
+}
+
+// Varios
+int vectorVacio(Vector *v)
+{
+    return v->ce == 0;
+}
+
+int VectorCE(Vector *v)
+{
+    return v->ce;
 }
