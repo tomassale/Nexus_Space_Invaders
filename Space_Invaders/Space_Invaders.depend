@@ -1632,7 +1632,7 @@
 	<SDL.h>
 	<stdbool.h>
 
-1792010159 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\game.c
+1792025076 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\game.c
 	<stdbool.h>
 	"game.h"
 	"jugador/jugador.h"
@@ -1649,14 +1649,17 @@
 	<stdio.h>
 	<SDL.h>
 
-1791941758 c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\jugador\jugador.h
+1792024612 c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\jugador\jugador.h
+	<stdbool.h>
+	<SDL.h>
+	"../../engine/sprites.h"
 
 1791941758 c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\jugador\disparo.h
 
 1791941758 c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\mapa\mapa.h
 	<stdbool.h>
 
-1791941758 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\jugador\jugador.c
+1792024954 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\jugador\jugador.c
 	"jugador.h"
 
 1791941758 source:c:\dev\topicos\api\nexus_space_invaders\space_invaders\src\game\mapa\mapa.c

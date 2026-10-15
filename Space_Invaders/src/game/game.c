@@ -11,19 +11,9 @@
 #include "jugador/bala.h"
 #include "../engine/vector.h"
 
-#define ANCHO_JUGADOR 20
-#define ALTO_JUGADOR 10
-
-//#define JUGADOR_ANCHO 20
-//#define JUGADOR_ALTO 10
-
-
 #define ANCHO_DISPARO 2
 #define ALTO_DISPARO 10
 
-#define DESPLAZAMIENTO_CANNON_X ((ANCHO_JUGADOR)/2)-((ANCHO_DISPARO)/2)
-
-#define VELOCIDAD_DISPARO_JUGADOR 8
 #define VELOCIDAD_DISPARO_ENEMIGO 5
 
 /* Resolucion logica del juego */
@@ -43,7 +33,6 @@ static tDisparo disparoEnemigo;
 
 
 static tSprite sprFondo = {0};
-static tSprite sprJugador = {0};
 //static tSprite sprEscudos;
 //static tSprite sprEnemigos;
 
@@ -70,7 +59,7 @@ static void game_disparar_jugador(void)
         return;
 
     Bala bala;
-    int x = jugador.x + (ANCHO_JUGADOR / 2) - (BALA_ANCHO / 2);
+    int x = jugador.x + (JUGADOR_ANCHO / 2) - (BALA_ANCHO / 2);
     int y = jugador.y - BALA_ALTO;
 
     bala_crear(&bala, x, y);
@@ -95,16 +84,6 @@ static void game_actualizar_disparos(void)
 }
 
 
-/*
-//Mapa
-static void gameMapa(){}
-
-//Recursos
-static void gameEscudos(){}
-static void gameScore(){}
-static void gamePause(){}
-*/
-
 /*** FUNCIONES PUBLICAS ***/
 
 bool gameCrear(SDL_Renderer *render)
@@ -113,7 +92,7 @@ bool gameCrear(SDL_Renderer *render)
     sndDisparoJugador = sonidoCargar("assets/audio/disparo_jugador.wav");
     fntPuntaje = fuenteCargar("assets/fonts/space_invaders.ttf", 8);
 
-    if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
+    if(!jugador_cargar(&jugador, render) ||
             !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
     {
         gameDestruir();
@@ -211,12 +190,7 @@ void gameDibujar(SDL_Renderer *render)
     fuenteDibujar(render, fntPuntaje, buf, 8, 17, blanco);
 
     /* Dibujar jugador */
-    spriteDibujar(render, &sprJugador, jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
-
-    rect.x = jugador.x;
-    rect.y = jugador.y;
-    rect.w = ANCHO_JUGADOR;
-    rect.h = ALTO_JUGADOR;
+    jugador_dibujar(&jugador, render);
 
     /* Dibujar enemigos */
     mapa_enemigos_dibujar(render);
@@ -249,7 +223,7 @@ bool gameEjecutando(void)
 void gameDestruir(void)
 {
     spriteLiberar(&sprFondo);
-    spriteLiberar(&sprJugador);
+    jugador_destruir(&jugador);
     //spriteLiberar(&sprEnemigos);
     //spriteLiberar(&sprEscudos);
 
