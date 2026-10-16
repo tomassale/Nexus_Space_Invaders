@@ -7,12 +7,14 @@
 #include "../engine/sprites.h"
 #include "../engine/audio.h"
 #include "../engine/fonts.h"
-
 #include "jugador/bala.h"
 #include "../engine/vector.h"
 
-#define ANCHO_DISPARO 2
 #define ALTO_DISPARO 10
+
+#define ANCHO_CARACTER 6
+#define ALTO_CARACTER 8
+#define ANCHO_DISPARO 2
 
 #define VELOCIDAD_DISPARO_ENEMIGO 5
 
@@ -23,6 +25,7 @@
 /*** VARIABLES PRIVADAS ***/
 
 static bool ejecutando = false;
+static bool pausa = false;
 static int puntaje;
 static int ronda;
 
@@ -148,9 +151,9 @@ void gameProcesarEventos(void)
                 evento.key.repeat == 0)
         {
             if(evento.key.keysym.sym == SDLK_ESCAPE)
-                ejecutando = false;
+                pausa = !pausa;
 
-            if(evento.key.keysym.sym == SDLK_SPACE)
+            if(evento.key.keysym.sym == SDLK_SPACE && !pausa)
                 game_disparar_jugador();
         }
 
@@ -162,6 +165,9 @@ void gameActualizar(float delta)
     const Uint8 *teclado = SDL_GetKeyboardState(NULL);
 
     (void)delta;
+
+    if(pausa)
+        return;
 
     if(teclado[SDL_SCANCODE_LEFT])
         jugador_mover(&jugador, -1);
@@ -213,7 +219,23 @@ void gameDibujar(SDL_Renderer *render)
 
         SDL_RenderFillRect(render, &rect);
     }
+
+    /* Dibujar pausa */
+    if(pausa)
+    {
+        SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(render, 0, 0, 0, 160);
+
+        rect.x = 0;
+        rect.y = 0;
+        rect.w = VENTANA_X;
+        rect.h = VENTANA_Y;
+        SDL_RenderFillRect(render, &rect);
+
+        fuenteDibujar(render, fntPuntaje, "PAUSA", (VENTANA_X - (ANCHO_CARACTER * 5)) / 2, (VENTANA_Y - ALTO_CARACTER) / 2, blanco);
+    }
 }
+
 
 bool gameEjecutando(void)
 {
@@ -239,7 +261,7 @@ void gameDestruir(void)
     //sndFinalNivel = NULL;
     //sndNaveBajando = NULL;
 
-     vectorDestruir(&vBalasJugador);
+    vectorDestruir(&vBalasJugador);
 
     fuenteLiberar(fntPuntaje);
     fntPuntaje = NULL;
