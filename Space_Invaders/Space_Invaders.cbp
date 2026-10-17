@@ -66,47 +66,47 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="main.h" />
-		<Unit filename="src/engine/audio.c">
+		<Unit filename="src/audio.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/engine/audio.h" />
-		<Unit filename="src/engine/fonts.c">
+		<Unit filename="src/audio.h" />
+		<Unit filename="src/bala.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/engine/fonts.h" />
-		<Unit filename="src/engine/motor.c">
+		<Unit filename="src/bala.h" />
+		<Unit filename="src/disparo.h" />
+		<Unit filename="src/fonts.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/engine/motor.h" />
-		<Unit filename="src/engine/vector.c">
+		<Unit filename="src/fonts.h" />
+		<Unit filename="src/game.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/engine/vector.h" />
-		<Unit filename="src/engine/sprites.c">
+		<Unit filename="src/game.h" />
+		<Unit filename="src/jugador.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/engine/sprites.h" />
-		<Unit filename="src/game/game.c">
+		<Unit filename="src/jugador.h" />
+		<Unit filename="src/mapa.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/game/game.h" />
-		<Unit filename="src/game/jugador/disparo.h" />
-		<Unit filename="src/game/jugador/bala.c">
+		<Unit filename="src/mapa.h" />
+		<Unit filename="src/motor.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/game/jugador/bala.h" />
-		<Unit filename="src/game/jugador/jugador.c">
+		<Unit filename="src/motor.h" />
+		<Unit filename="src/recursos.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/game/jugador/jugador.h" />
-		<Unit filename="src/game/mapa/mapa.c">
+		<Unit filename="src/recursos.h" />
+		<Unit filename="src/sprites.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/game/mapa/mapa.h" />
-		<Unit filename="src/game/recursos/recursos.c">
+		<Unit filename="src/sprites.h" />
+		<Unit filename="src/vector.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/game/recursos/recursos.h" />
+		<Unit filename="src/vector.h" />
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

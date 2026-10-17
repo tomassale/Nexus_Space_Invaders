@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <SDL.h>
-#include "../../engine/sprites.h"
+#include "sprites.h"
 
 #define JUGADOR_ANCHO 20
 #define JUGADOR_ALTO  10
