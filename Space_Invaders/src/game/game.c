@@ -170,6 +170,8 @@ void gameActualizar(float delta)
     if(pausa)
         return;
 
+    teclado = SDL_GetKeyboardState(NULL);
+
     if(teclado[SDL_SCANCODE_LEFT])
         jugador_mover(&jugador, -1);
 
