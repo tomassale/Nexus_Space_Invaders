@@ -7,26 +7,15 @@
 #include "../engine/sprites.h"
 #include "../engine/audio.h"
 #include "../engine/fonts.h"
-
 #include "jugador/bala.h"
 #include "../engine/vector.h"
 
-#define ANCHO_CARACTER 6
-#define ALTO_CARACTER 8
-
-#define ANCHO_JUGADOR 20
-#define ALTO_JUGADOR 10
-
-//#define JUGADOR_ANCHO 20
-//#define JUGADOR_ALTO 10
-
-
-#define ANCHO_DISPARO 2
 #define ALTO_DISPARO 10
 
-#define DESPLAZAMIENTO_CANNON_X ((ANCHO_JUGADOR)/2)-((ANCHO_DISPARO)/2)
+#define ANCHO_CARACTER 6
+#define ALTO_CARACTER 8
+#define ANCHO_DISPARO 2
 
-#define VELOCIDAD_DISPARO_JUGADOR 8
 #define VELOCIDAD_DISPARO_ENEMIGO 5
 
 /* Resolucion logica del juego */
@@ -47,7 +36,6 @@ static tDisparo disparoEnemigo;
 
 
 static tSprite sprFondo = {0};
-static tSprite sprJugador = {0};
 //static tSprite sprEscudos;
 //static tSprite sprEnemigos;
 
@@ -74,7 +62,7 @@ static void game_disparar_jugador(void)
         return;
 
     Bala bala;
-    int x = jugador.x + (ANCHO_JUGADOR / 2) - (BALA_ANCHO / 2);
+    int x = jugador.x + (JUGADOR_ANCHO / 2) - (BALA_ANCHO / 2);
     int y = jugador.y - BALA_ALTO;
 
     bala_crear(&bala, x, y);
@@ -99,16 +87,6 @@ static void game_actualizar_disparos(void)
 }
 
 
-/*
-//Mapa
-static void gameMapa(){}
-
-//Recursos
-static void gameEscudos(){}
-static void gameScore(){}
-static void gamePause(){}
-*/
-
 /*** FUNCIONES PUBLICAS ***/
 
 bool gameCrear(SDL_Renderer *render)
@@ -117,7 +95,7 @@ bool gameCrear(SDL_Renderer *render)
     sndDisparoJugador = sonidoCargar("assets/audio/disparo_jugador.wav");
     fntPuntaje = fuenteCargar("assets/fonts/space_invaders.ttf", 8);
 
-    if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
+    if(!jugador_cargar(&jugador, render) ||
             !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
     {
         gameDestruir();
@@ -192,8 +170,6 @@ void gameActualizar(float delta)
     if(pausa)
         return;
 
-    teclado = SDL_GetKeyboardState(NULL);
-
     if(teclado[SDL_SCANCODE_LEFT])
         jugador_mover(&jugador, -1);
 
@@ -212,7 +188,7 @@ void gameActualizar(float delta)
 
     if(!mapa_enemigos_hay_activos())
     {
-        /* Acá tenés que gestionar la victoria */
+        /* Acï¿½ tenï¿½s que gestionar la victoria */
     }
 }
 
@@ -234,12 +210,7 @@ void gameDibujar(SDL_Renderer *render)
     fuenteDibujar(render, fntPuntaje, buf, 8, 17, blanco);
 
     /* Dibujar jugador */
-    spriteDibujar(render, &sprJugador, jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
-
-    rect.x = jugador.x;
-    rect.y = jugador.y;
-    rect.w = ANCHO_JUGADOR;
-    rect.h = ALTO_JUGADOR;
+    jugador_dibujar(&jugador, render);
 
     /* Dibujar enemigos */
     mapa_enemigos_dibujar(render);
@@ -263,7 +234,7 @@ void gameDibujar(SDL_Renderer *render)
         SDL_RenderFillRect(render, &rect);
     }
 
-    /*Dibujar pausa*/
+    /* Dibujar pausa */
     if(pausa)
     {
         SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
@@ -275,9 +246,10 @@ void gameDibujar(SDL_Renderer *render)
         rect.h = VENTANA_Y;
         SDL_RenderFillRect(render, &rect);
 
-        fuenteDibujar(render, fntPuntaje, "PAUSA", (VENTANA_X - (ANCHO_CARACTER * 5)) / 2, (VENTANA_Y - ALTO_CARACTER)/2, blanco);
+        fuenteDibujar(render, fntPuntaje, "PAUSA", (VENTANA_X - (ANCHO_CARACTER * 5)) / 2, (VENTANA_Y - ALTO_CARACTER) / 2, blanco);
     }
 }
+
 
 bool gameEjecutando(void)
 {
@@ -287,7 +259,7 @@ bool gameEjecutando(void)
 void gameDestruir(void)
 {
     spriteLiberar(&sprFondo);
-    spriteLiberar(&sprJugador);
+    jugador_destruir(&jugador);
     //spriteLiberar(&sprEnemigos);
     //spriteLiberar(&sprEscudos);
 
@@ -303,7 +275,7 @@ void gameDestruir(void)
     //sndFinalNivel = NULL;
     //sndNaveBajando = NULL;
 
-     vectorDestruir(&vBalasJugador);
+    vectorDestruir(&vBalasJugador);
 
     fuenteLiberar(fntPuntaje);
     fntPuntaje = NULL;
