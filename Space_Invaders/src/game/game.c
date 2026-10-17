@@ -162,7 +162,8 @@ void gameProcesarEventos(void)
 
 void gameActualizar(float delta)
 {
-    const Uint8 *teclado = SDL_GetKeyboardState(NULL);
+    const Uint8 *teclado;
+    static float tiempoMovimientoEnemigos = 0.0f;
 
     (void)delta;
 
@@ -176,6 +177,19 @@ void gameActualizar(float delta)
         jugador_mover(&jugador, 1);
 
     game_actualizar_disparos();
+
+    tiempoMovimientoEnemigos += delta;
+
+    if(tiempoMovimientoEnemigos >= 0.5f)
+    {
+        mapa_enemigos_mover();
+        tiempoMovimientoEnemigos -= 0.5f;
+    }
+
+    if(!mapa_enemigos_hay_activos())
+    {
+        /* Ac� ten�s que gestionar la victoria */
+    }
 }
 
 void gameDibujar(SDL_Renderer *render)
