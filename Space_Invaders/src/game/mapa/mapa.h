@@ -18,19 +18,15 @@ typedef struct
     int activo;
 }tEscudos;
 
-typedef enum
-{
-    ENEMIGO_CALAMAR_VERDE,
-    ENEMIGO_CANGREJO_VERDE,
-    ENEMIGO_CANGREJO_TURQUESA,
-    ENEMIGO_PULPO_TURQUESA,
-    ENEMIGO_PULPO_MORADO
-} tTipoEnemigo;
+#define ENEMIGO_CALAMAR_VERDE       0
+#define ENEMIGO_CANGREJO_VERDE      1
+#define ENEMIGO_CANGREJO_TURQUESA   2
+#define ENEMIGO_PULPO_TURQUESA      3
+#define ENEMIGO_PULPO_MORADO        4
 
 void mapa_enemigos_iniciar(void);
-void mapa_enemigos_actualizar(void);
+void mapa_enemigos_mover(void);
 void mapa_escudos_iniciar(void);
-void mapa_escudos_actualizar(void);
 void mapa_escudos_dibujar(SDL_Renderer *render);
 void mapa_enemigos_dibujar(SDL_Renderer *render);
 bool mapa_sprites_cargar(SDL_Renderer *render);

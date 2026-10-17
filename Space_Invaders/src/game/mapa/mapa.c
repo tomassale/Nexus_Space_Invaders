@@ -4,13 +4,14 @@
 #include "../jugador/jugador.h"
 #include "../recursos/recursos.h"
 #include "../../engine/sprites.h"
+#include <stdbool.h>
 
 #define FILAS_ENEMIGOS 5
 #define COLUMNAS_ENEMIGOS 11
 #define INICIO_X 20
 #define INICIO_Y 30
 #define SEPARACION_X 20
-#define SEPARACION_Y 25
+#define SEPARACION_Y 15
 #define ENEMIGO_ANCHO 12
 #define ENEMIGO_ALTO 8
 #define CANT_ESCUDOS 4
@@ -20,14 +21,22 @@
 #define ESCUDOS_INICIO_Y 170
 #define ESCUDOS_SEPARACION_X 50
 
+#define VENTANA_X 256
+#define VENTANA_Y 240
+#define VELOCIDAD_ENEMIGOS 2
+#define DESCENSO_ENEMIGOS 10
+#define ALTURA_AMARILLA 150
+
 tEnemigos enemigos [FILAS_ENEMIGOS][COLUMNAS_ENEMIGOS];
 tEscudos escudos [CANT_ESCUDOS];
-static tSprite sprCalamarVerde = {0};
-static tSprite sprCangrejoVerde = {0};
-static tSprite sprCangrejoTurquesa = {0};
-static tSprite sprPulpoTurquesa = {0};
-static tSprite sprPulpoMorado = {0};
+static tSprite sprCalamar[2] = {0};
+static tSprite sprCangrejo[2] = {0};
+static tSprite sprPulpo[2] = {0};
 static tSprite sprEscudo = {0};
+static tSprite sprEliminado = {0};
+static int frameAnimacion = 0;
+
+static int direccion = 1;
 
 static const int tiposNivel1[FILAS_ENEMIGOS] =
 {
@@ -85,24 +94,32 @@ void mapa_enemigos_iniciar(void)
 
 bool mapa_sprites_cargar(SDL_Renderer *render)
 {
-    if(!spriteCargar(&sprCalamarVerde, render,
+    if(!spriteCargar(&sprCalamar[0], render,
                      "assets/images/calamar.png", 1, 0))
         return false;
 
-    if(!spriteCargar(&sprCangrejoVerde, render,
+    if(!spriteCargar(&sprCalamar[1], render,
+                     "assets/images/calamar_anim.png", 1, 0))
+        return false;
+
+    if(!spriteCargar(&sprCangrejo[0], render,
                      "assets/images/cangrejo.png", 1, 0))
         return false;
 
-    if(!spriteCargar(&sprCangrejoTurquesa, render,
-                     "assets/images/cangrejo.png", 1, 0))
+    if(!spriteCargar(&sprCangrejo[1], render,
+                     "assets/images/cangrejo_anim.png", 1, 0))
         return false;
 
-    if(!spriteCargar(&sprPulpoTurquesa, render,
+    if(!spriteCargar(&sprPulpo[0], render,
                      "assets/images/pulpo.png", 1, 0))
         return false;
 
-    if(!spriteCargar(&sprPulpoMorado, render,
-                     "assets/images/pulpo.png", 1, 0))
+    if(!spriteCargar(&sprPulpo[1], render,
+                     "assets/images/pulpo_anim.png", 1, 0))
+        return false;
+
+    if(!spriteCargar(&sprEliminado, render,
+                     "assets/images/eliminado.png", 1, 0))
         return false;
 
     if(!spriteCargar(&sprEscudo, render,
@@ -126,51 +143,123 @@ void mapa_enemigos_dibujar(SDL_Renderer *render)
                 switch(enemigos[fila][columna].tipo)
                 {
                     case ENEMIGO_CALAMAR_VERDE:
-                        //SDL_SetRenderDrawColor(render, 0, 255, 0, 255);
-                        sprite = &sprCalamarVerde;
+                        sprite = &sprCalamar[frameAnimacion];
                         SDL_SetTextureColorMod(sprite->textura, 0, 255, 0);
                         break;
+
                     case ENEMIGO_CANGREJO_VERDE:
-                        //SDL_SetRenderDrawColor(render, 0, 180, 0, 255);
-                        sprite = &sprCangrejoVerde;
+                        sprite = &sprCangrejo[frameAnimacion];
                         SDL_SetTextureColorMod(sprite->textura, 0, 255, 0);
                         break;
+
                     case ENEMIGO_CANGREJO_TURQUESA:
-                        //SDL_SetRenderDrawColor(render, 0, 255, 200, 255);
-                        sprite = &sprCangrejoTurquesa;
+                        sprite = &sprCangrejo[frameAnimacion];
                         SDL_SetTextureColorMod(sprite->textura, 0, 255, 200);
                         break;
+
                     case ENEMIGO_PULPO_TURQUESA:
-                        //SDL_SetRenderDrawColor(render, 0, 255, 200, 255);
-                        sprite = &sprPulpoTurquesa;
+                        sprite = &sprPulpo[frameAnimacion];
                         SDL_SetTextureColorMod(sprite->textura, 0, 255, 200);
                         break;
+
                     case ENEMIGO_PULPO_MORADO:
-                        //SDL_SetRenderDrawColor(render, 200, 102, 238, 255);
-                        sprite = &sprPulpoMorado;
+                        sprite = &sprPulpo[frameAnimacion];
                         SDL_SetTextureColorMod(sprite->textura, 200, 102, 238);
                         break;
+
                     default:
-                        //SDL_SetRenderDrawColor(render, 128, 128, 128, 255);
+                        sprite = NULL;
                         break;
                 }
 
                 if(sprite != NULL)
                 {
                     spriteDibujar(render, sprite,enemigos[fila][columna].x,enemigos[fila][columna].y,ENEMIGO_ANCHO, ENEMIGO_ALTO);
+
+                    if(enemigos[fila][columna].y >= ALTURA_AMARILLA)
+                    {
+                        SDL_SetTextureColorMod(sprite->textura, 255, 255, 0);
+                    }
+
+                    spriteDibujar(render, sprite,
+                    enemigos[fila][columna].x,
+                    enemigos[fila][columna].y,
+                    ENEMIGO_ANCHO, ENEMIGO_ALTO);
                 }
             }
         }
     }
 }
-void mapa_enemigos_actualizar(void);
-int mapa_enemigos_hay_activos(void);
+
+void mapa_enemigos_mover(void)
+{
+    int fila, columna;
+    bool llegoAlBorde = false;
+
+    frameAnimacion = 1 - frameAnimacion;
+
+    for(fila = 0; fila < FILAS_ENEMIGOS; fila++)
+    {
+        for(columna = 0; columna < COLUMNAS_ENEMIGOS; columna++)
+        {
+            if(enemigos[fila][columna].activo)
+            {
+                if(enemigos[fila][columna].x + ENEMIGO_ANCHO >= VENTANA_X ||
+                   enemigos[fila][columna].x <= 0)
+                {
+                    llegoAlBorde = true;
+                }
+            }
+        }
+    }
+
+    if(llegoAlBorde)
+    {
+        direccion *= -1;
+    }
+
+    for(fila = 0; fila < FILAS_ENEMIGOS; fila++)
+    {
+        for(columna = 0; columna < COLUMNAS_ENEMIGOS; columna++)
+        {
+            if(enemigos[fila][columna].activo)
+            {
+                enemigos[fila][columna].x += VELOCIDAD_ENEMIGOS * direccion;
+
+                if(llegoAlBorde)
+                {
+                    enemigos[fila][columna].y += DESCENSO_ENEMIGOS;
+                }
+            }
+        }
+    }
+}
+
+int mapa_enemigos_hay_activos(void)
+{
+    int fila, columna;
+    int hay=0;
+
+    for(fila=0;fila<FILAS_ENEMIGOS;fila++)
+    {
+        for(columna=0;columna<COLUMNAS_ENEMIGOS;columna++)
+        {
+            if(enemigos[fila][columna].activo)
+                hay=1;
+        }
+    }
+
+    return hay;
+}
+
 void mapa_sprites_liberar(void)
 {
-    spriteLiberar(&sprCalamarVerde);
-    spriteLiberar(&sprCangrejoVerde);
-    spriteLiberar(&sprCangrejoTurquesa);
-    spriteLiberar(&sprPulpoTurquesa);
-    spriteLiberar(&sprPulpoMorado);
+    spriteLiberar(&sprCalamar[0]);
+    spriteLiberar(&sprCangrejo[0]);
+    spriteLiberar(&sprPulpo[0]);
+    spriteLiberar(&sprCalamar[1]);
+    spriteLiberar(&sprCangrejo[1]);
+    spriteLiberar(&sprPulpo[1]);
+    spriteLiberar(&sprEliminado);
     spriteLiberar(&sprEscudo);
 }
