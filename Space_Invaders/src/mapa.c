@@ -1,9 +1,9 @@
 #include <SDL.h>
 #include "mapa.h"
-#include "../game.h"
-#include "../jugador/jugador.h"
-#include "../recursos/recursos.h"
-#include "../../engine/sprites.h"
+#include "game.h"
+#include "jugador.h"
+#include "recursos.h"
+#include "sprites.h"
 #include <stdbool.h>
 
 #define FILAS_ENEMIGOS 5

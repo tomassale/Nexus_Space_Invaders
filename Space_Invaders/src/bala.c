@@ -1,5 +1,5 @@
 #include "bala.h"
-#include "../../engine/motor.h"
+#include "motor.h"
 
 void bala_crear(Bala *bala, int x, int y)
 {

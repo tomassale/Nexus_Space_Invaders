@@ -1,14 +1,14 @@
 #include <stdbool.h>
 
 #include "game.h"
-#include "jugador/jugador.h"
-#include "jugador/disparo.h"
-#include "mapa/mapa.h"
-#include "../engine/sprites.h"
-#include "../engine/audio.h"
-#include "../engine/fonts.h"
-#include "jugador/bala.h"
-#include "../engine/vector.h"
+#include "jugador.h"
+#include "disparo.h"
+#include "mapa.h"
+#include "sprites.h"
+#include "audio.h"
+#include "fonts.h"
+#include "bala.h"
+#include "vector.h"
 
 #define ALTO_DISPARO 10
 

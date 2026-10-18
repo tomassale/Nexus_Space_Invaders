@@ -1,7 +1,7 @@
 #ifndef MAIN_H_INCLUDED
 #define MAIN_H_INCLUDED
 
-#include "src/engine/motor.h"
-#include "src/game/game.h"
+#include "src/motor.h"
+#include "src/game.h"
 
 #endif // MAIN_H_INCLUDED
