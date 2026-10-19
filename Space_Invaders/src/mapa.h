@@ -11,6 +11,9 @@ typedef struct
     int tipo;
 }tEnemigos;
 
+#define ENEMIGO_ANCHO 12
+#define ENEMIGO_ALTO 8
+
 typedef struct
 {
     int x;
@@ -18,16 +21,45 @@ typedef struct
     int activo;
 }tEscudos;
 
+typedef struct
+{
+    int x;
+    int y;
+    int activo;
+} tParteEscudos;
+
+#define CANT_ESCUDOS 4
+#define ESCUDOS_ANCHO 35
+#define ESCUDOS_ALTO 35
+
+#define PARTE_ESCUDO_ANCHO 5
+#define PARTE_ESCUDO_ALTO 5
+
+#define COLUMNAS_ESCUDO (ESCUDOS_ANCHO / PARTE_ESCUDO_ANCHO)
+#define FILAS_ESCUDO (ESCUDOS_ALTO / PARTE_ESCUDO_ALTO)
+
+#define PARTES_POR_ESCUDO (COLUMNAS_ESCUDO * FILAS_ESCUDO)
+#define PARTES_ESCUDOS_TOTAL (CANT_ESCUDOS * PARTES_POR_ESCUDO)
+
 #define ENEMIGO_CALAMAR_VERDE       0
 #define ENEMIGO_CANGREJO_VERDE      1
 #define ENEMIGO_CANGREJO_TURQUESA   2
 #define ENEMIGO_PULPO_TURQUESA      3
 #define ENEMIGO_PULPO_MORADO        4
 
-void mapa_enemigos_iniciar(void);
+
+int mapa_enemigos_iniciar(void);
+void mapa_enemigos_destruir(void);
 void mapa_enemigos_mover(void);
-void mapa_escudos_iniciar(void);
+int mapa_enemigo_impactado(int x, int y, int *tipoEliminado);
+int mapa_enemigos_obtener(tEnemigos *enemigo);
+int mapa_enemigo_toca_jugador(int x, int y);
+int mapa_escudos_iniciar(void);
+int mapa_escudo_impactado(int x, int y);
+void mapa_destruir_parte_escudo(unsigned indiceParte);
+void mapa_actualizar_estado_escudo(unsigned indiceEscudo);
 void mapa_escudos_dibujar(SDL_Renderer *render);
+void mapa_escudos_destruir(void);
 void mapa_enemigos_dibujar(SDL_Renderer *render);
 bool mapa_sprites_cargar(SDL_Renderer *render);
 int mapa_enemigos_hay_activos(void);

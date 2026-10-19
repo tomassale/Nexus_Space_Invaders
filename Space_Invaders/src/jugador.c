@@ -4,6 +4,7 @@
 #define DERECHA 1
 
 #define VELOCIDAD_JUGADOR 3
+#define ANCHO_JUGADOR 20
 
 /* Valores provisionales */
 #define VENTANA_X 256
@@ -18,11 +19,6 @@ void jugador_iniciar(tJugador *jugador)
     jugador->puntaje = 0;
 }
 
-bool jugador_cargar(tJugador *jugador, SDL_Renderer *render)
-{
-    return spriteCargar(&jugador->sprite, render, "assets/images/jugador.png", 1, 0);
-}
-
 void jugador_mover(tJugador *jugador, int direccion)
 {
     int resultante;
@@ -31,19 +27,9 @@ void jugador_mover(tJugador *jugador, int direccion)
     {
         resultante = jugador->x + direccion * VELOCIDAD_JUGADOR;
 
-        if(resultante >= 0 && resultante <= VENTANA_X - JUGADOR_ANCHO)
+        if(resultante >= 0 && resultante <= VENTANA_X - ANCHO_JUGADOR)
         {
             jugador->x = resultante;
         }
     }
-}
-
-void jugador_dibujar(const tJugador *jugador, SDL_Renderer *render)
-{
-    spriteDibujar(render, &jugador->sprite, jugador->x, jugador->y, JUGADOR_ANCHO, JUGADOR_ALTO);
-}
-
-void jugador_destruir(tJugador *jugador)
-{
-    spriteLiberar(&jugador->sprite);
 }
