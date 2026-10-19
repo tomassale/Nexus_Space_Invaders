@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <SDL.h>
+#include "vector.h"
 
 /* Escudos: cada escudo esta armado con partes chicas que se destruyen de a una */
 typedef struct
@@ -36,6 +37,7 @@ int mapa_escudos_iniciar(void);
 int mapa_escudo_impactado(int x, int y);
 void mapa_destruir_parte_escudo(unsigned indiceParte);
 void mapa_actualizar_estado_escudo(unsigned indiceEscudo);
+void mapa_enemigos_rompen_escudos(Vector *vEnemigos);
 void mapa_escudos_dibujar(SDL_Renderer *render);
 void mapa_escudos_destruir(void);
 

@@ -2,6 +2,7 @@
 #include "mapa.h"
 #include "bala.h"      /* BALA_ANCHO / BALA_ALTO: los usa la colision */
 #include "sprites.h"
+#include "enemigo.h"
 #include "vector.h"
 #include "audio.h"
 #include <stdbool.h>
@@ -55,8 +56,8 @@ int mapa_escudos_iniciar(void)
         {
             for(columna = 0; columna < COLUMNAS_ESCUDO; columna++)
             {
-                parte.x = escudo.x + columna * 5;
-                parte.y = escudo.y + fila * 5;
+                parte.x = escudo.x + columna * PARTE_ESCUDO_ANCHO;
+                parte.y = escudo.y + fila * PARTE_ESCUDO_ALTO;
                 parte.activo = 1;
 
                 if(vectorInsertarAlFinal(&vEscudosPartes, &parte) != TODO_OK)
@@ -84,22 +85,21 @@ static int hayColisionBalaAEscudo(int x1, int y1, int x2, int y2)
 int mapa_escudo_impactado(int x, int y)
 {
     unsigned i = 0;
-    unsigned cantidad = VectorCE(&vEscudosPartes);
-    tParteEscudos parte;
+    unsigned cantidad = (unsigned)VectorCE(&vEscudosPartes);
     unsigned indiceEscudo;
+    tParteEscudos parte;
 
     while(i < cantidad)
     {
-        vectorGetByPos(&vEscudosPartes, i, &parte);
-
-        if(parte.activo && hayColisionBalaAEscudo(x, y, parte.x, parte.y))
+        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+           parte.activo &&
+           hayColisionBalaAEscudo(x, y, parte.x, parte.y))
         {
-            parte.activo = 0;
             mapa_destruir_parte_escudo(i);
 
-            /* A que escudo pertenece la parte golpeada */
             indiceEscudo = i / PARTES_POR_ESCUDO;
             mapa_actualizar_estado_escudo(indiceEscudo);
+
             return 1;
         }
 
@@ -129,12 +129,13 @@ void mapa_actualizar_estado_escudo(unsigned indiceEscudo)
     tParteEscudos parte;
     tEscudos escudo;
 
-    /* El escudo entero se apaga recien cuando no le queda ninguna parte viva */
     while(i < fin && !hayPartesActivas)
     {
         if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
            parte.activo)
+        {
             hayPartesActivas = 1;
+        }
 
         i++;
     }
@@ -143,29 +144,99 @@ void mapa_actualizar_estado_escudo(unsigned indiceEscudo)
        vectorGetByPos(&vEscudos, indiceEscudo, &escudo))
     {
         escudo.activo = 0;
+
         vectorUpdateByPos(&vEscudos, indiceEscudo, &escudo);
     }
 }
 
-/* Accion que el TDA aplica a cada escudo; el render llega en "datos" */
-static int dibujarEscudo(void *e, void *datos)
+/* Colision entre un enemigo y una parte del escudo */
+static int hayColisionEnemigoAEscudo(int xE, int yE,
+                                     int xP, int yP)
 {
-    tEscudos *escudo = e;
-    SDL_Renderer *render = datos;
+    return xE < xP + PARTE_ESCUDO_ANCHO &&
+           xE + ENEMIGO_ANCHO > xP &&
+           yE < yP + PARTE_ESCUDO_ALTO &&
+           yE + ENEMIGO_ALTO > yP;
+}
 
-    if(escudo->activo)
+/* Destruye las partes del escudo que toca la formacion */
+void mapa_enemigos_rompen_escudos(Vector *vEnemigos)
+{
+    unsigned i, j;
+    unsigned cantEnemigos = (unsigned)VectorCE(vEnemigos);
+    unsigned cantPartes = (unsigned)VectorCE(&vEscudosPartes);
+    tEnemigo enemigo;
+    tParteEscudos parte;
+
+    for(i = 0; i < cantEnemigos; i++)
     {
-        spriteDibujar(render, &sprEscudo,
-                      escudo->x, escudo->y,
-                      ESCUDOS_ANCHO, ESCUDOS_ALTO);
+        if(vectorGetByPos(vEnemigos, i, &enemigo) &&
+           enemigo.activo)
+        {
+            for(j = 0; j < cantPartes; j++)
+            {
+                if(vectorGetByPos(&vEscudosPartes, j, &parte) &&
+                   parte.activo &&
+                   hayColisionEnemigoAEscudo(
+                       enemigo.x, enemigo.y, parte.x, parte.y))
+                {
+                    mapa_destruir_parte_escudo(j);
+                    mapa_actualizar_estado_escudo(
+                        j / PARTES_POR_ESCUDO);
+                }
+            }
+        }
     }
-
-    return 1;
 }
 
 void mapa_escudos_dibujar(SDL_Renderer *render)
 {
-    vectorMap(&vEscudos, dibujarEscudo, render);
+    unsigned i = 0;
+    unsigned cantidad = (unsigned)VectorCE(&vEscudosPartes);
+    unsigned indiceEscudo;
+    unsigned indiceLocal;
+    unsigned fila;
+    unsigned columna;
+
+    tParteEscudos parte;
+    tEscudos escudo;
+
+    SDL_Rect origen;
+    SDL_Rect destino;
+
+    while(i < cantidad)
+    {
+        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+           parte.activo)
+        {
+            indiceEscudo = i / PARTES_POR_ESCUDO;
+            indiceLocal = i % PARTES_POR_ESCUDO;
+
+            if(vectorGetByPos(&vEscudos, indiceEscudo, &escudo) &&
+               escudo.activo)
+            {
+                fila = indiceLocal / COLUMNAS_ESCUDO;
+                columna = indiceLocal % COLUMNAS_ESCUDO;
+
+                origen.x = columna * PARTE_ESCUDO_ANCHO;
+                origen.y = fila * PARTE_ESCUDO_ALTO;
+                origen.w = PARTE_ESCUDO_ANCHO;
+                origen.h = PARTE_ESCUDO_ALTO;
+
+                destino.x = parte.x;
+                destino.y = parte.y;
+                destino.w = PARTE_ESCUDO_ANCHO;
+                destino.h = PARTE_ESCUDO_ALTO;
+
+                SDL_RenderCopy(render,
+                               sprEscudo.textura,
+                               &origen,
+                               &destino);
+            }
+        }
+
+        i++;
+    }
 }
 
 void mapa_escudos_destruir(void)
