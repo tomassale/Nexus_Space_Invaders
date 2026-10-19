@@ -13,7 +13,10 @@
 #include "vector.h"
 
 #define CANT_PASOS 4
-#define RONDAS_PARA_GANAR 1
+#define RONDAS_PARA_GANAR 2
+
+#define RUTA_IMAGEN_MENU "assets/images/menu.png"
+#define RUTA_MUSICA_MENU "assets/audio/spaceinvaders1.mpeg"
 
 #define ALTO_CARACTER 8
 
@@ -37,6 +40,7 @@
 /*** VARIABLES PRIVADAS ***/
 
 static bool ejecutando = false;
+static bool enMenu = true;
 static bool pausa = false;
 static bool derrota = false;
 static bool victoria = false;
@@ -54,6 +58,7 @@ static float tiempoDisparo = 0;
 
 static tSprite sprFondo = {0};
 static tSprite sprJugador = {0};
+static tSprite sprMenu = {0};
 //static tSprite sprEscudos;
 //static tSprite sprEnemigos;
 
@@ -257,6 +262,33 @@ static void game_dibujar_texto_centrado(SDL_Renderer *render, const char *texto,
     fuenteDibujar(render, fntPuntaje, texto, x, y, color);
 }
 
+static void game_dibujar_menu(SDL_Renderer *render)
+{
+    SDL_Color blanco = {255, 255, 255, 255};
+
+    /* Sin imagen de portada, se usa el fondo del juego con el titulo en texto */
+    if(sprMenu.textura)
+    {
+        spriteDibujar(render, &sprMenu, 0, 0, VENTANA_X, VENTANA_Y);
+    }
+    else
+    {
+        spriteDibujar(render, &sprFondo, 0, 0, VENTANA_X, VENTANA_Y);
+        game_dibujar_texto_centrado(render, "SPACE INVADERS", VENTANA_Y / 3, blanco);
+    }
+
+    /* Parpadea cada medio segundo, como en los arcades */
+    if((SDL_GetTicks() / 500) % 2 == 0)
+        game_dibujar_texto_centrado(render, "PRESIONA ESPACIO PARA JUGAR",
+                                    VENTANA_Y - 40, blanco);
+}
+
+static void game_comenzar_partida(void)
+{
+    enMenu = false;
+    musicaDetener();
+}
+
 static void game_dibujar_transicion(SDL_Renderer *render)
 {
     SDL_Color blanco = {255, 255, 255, 255};
@@ -365,6 +397,12 @@ bool gameCrear(SDL_Renderer *render)
         gameDestruir();
         return false;
     }
+
+    /* La portada y la musica son opcionales: si faltan, el juego arranca igual */
+    spriteCargar(&sprMenu, render, RUTA_IMAGEN_MENU, 1, 0);
+    musicaReproducir(RUTA_MUSICA_MENU, true);
+
+    enMenu = true;
     ejecutando = true;
 
     return true;
@@ -380,6 +418,12 @@ void gameProcesarEventos(void)
             ejecutando = false;
 
         if(evento.type == SDL_KEYDOWN &&
+                evento.key.repeat == 0 && enMenu)
+        {
+            if(evento.key.keysym.sym == SDLK_SPACE)
+                game_comenzar_partida();
+        }
+        else if(evento.type == SDL_KEYDOWN &&
                 evento.key.repeat == 0)
         {
             if(evento.key.keysym.sym == SDLK_ESCAPE && !transicionRonda)
@@ -410,7 +454,7 @@ void gameActualizar(float delta)
 
     (void)delta;
 
-    if(pausa || derrota || victoria)
+    if(enMenu || pausa || derrota || victoria)
         return;
 
     if(transicionRonda)
@@ -467,6 +511,12 @@ void gameActualizar(float delta)
 void gameDibujar(SDL_Renderer *render)
 {
     SDL_Rect rect;
+
+    if(enMenu)
+    {
+        game_dibujar_menu(render);
+        return;
+    }
 
     /*Dibujar fondo*/
     spriteDibujar(render, &sprFondo, 0, 0, VENTANA_X, VENTANA_Y);
@@ -545,6 +595,8 @@ void gameDestruir(void)
 
     spriteLiberar(&sprFondo);
     spriteLiberar(&sprJugador);
+    spriteLiberar(&sprMenu);
+    musicaDetener();
     //spriteLiberar(&sprEnemigos);
     //spriteLiberar(&sprEscudos);
 
