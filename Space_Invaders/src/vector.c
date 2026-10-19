@@ -79,6 +79,20 @@ int vectorUpdate(Vector *v, void *elem, int cmp(const void*, const void *))
     return 1;
 }
 
+int vectorUpdateByPos(Vector *v, unsigned pos, const void *elem)
+{
+    void *lvec = v->vec;
+
+    if(pos < VectorCE(v))
+    {
+        lvec += pos * v->tamElem;
+        memcpy(lvec, elem, v->tamElem);
+        return 1;
+    }
+
+    return 0;
+}
+
 // Inserciones
 int vectorInsertarAlFinal(Vector *v, const void *d)
 {
@@ -155,6 +169,42 @@ int vectorFilter(Vector *v, int ffiltro(const void *elem, void *dato), void *dat
     }
 
     return TODO_OK;
+}
+
+int vectorGetByPos(Vector *v, unsigned pos, void *elem)
+{
+    void *lvec = v->vec;
+
+    if(pos < VectorCE(v))
+    {
+        lvec+= pos*v->tamElem;
+        memcpy(elem,lvec,v->tamElem);
+        return 1;
+    }
+
+    return 0;
+}
+
+int vectorRemoveByPos(Vector *v, unsigned pos)
+{
+    char *lvec = (char *)v->vec;
+    char *siguiente;
+    size_t bytes;
+
+    if(pos >= v->ce)
+        return 0;
+
+    lvec += pos * v->tamElem;
+    siguiente = lvec + v->tamElem;
+
+    bytes = (v->ce - pos - 1) * v->tamElem;
+
+    if(bytes > 0)
+        memmove(lvec, siguiente, bytes);
+
+    v->ce--;
+
+    return 1;
 }
 
 // Ordenamiento

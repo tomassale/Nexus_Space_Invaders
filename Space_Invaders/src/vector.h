@@ -34,6 +34,7 @@ int vectorRedimensionar(Vector *v, size_t nuevaCap);
 // Busquedas y actualizaciones
 int VectorSsearch(Vector *v, void *elem, int cmp(const void*, const void *));
 int vectorUpdate(Vector *v, void *elem, int cmp(const void*, const void *));
+int vectorUpdateByPos(Vector *v, unsigned pos, const void *elem);
 
 // Inserciones
 int vectorInsertarAlFinal(Vector *v, const void *d);
@@ -42,11 +43,14 @@ int vectorInsertarOrdenado(Vector *v, const void *elem, int cmp(const void*, con
 // Recorridos
 Vector *vectorMap(Vector *v, Accion accion, void *dato);
 int vectorFilter(Vector *v, int ffiltro(const void *elem, void *dato), void *dato);
+int vectorGetByPos(Vector *v, unsigned pos, void *elem);
+int vectorRemoveByPos(Vector *v, unsigned pos);
 
 // Ordenamiento
 void vectorQsort(Vector *v, int cmp(const void*, const void*));
 void vectorOrdenarSeleccion(Vector *v, int cmp(const void *, const void*));
 void *buscarMenor(void *ini, void *fin, size_t tamElem, int cmp(const void*, const void*));
+
 
 // Varios
 int vectorVacio(Vector *v);
