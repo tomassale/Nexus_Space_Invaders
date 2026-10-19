@@ -4,19 +4,29 @@
 
 #include "game.h"
 #include "jugador.h"
-#include "enemigo.h"
+#include "disparo.h"
 #include "mapa.h"
+#include "bala.h"
 #include "sprites.h"
 #include "audio.h"
 #include "fonts.h"
-#include "bala.h"
 #include "vector.h"
 
 #define ANCHO_CARACTER 6
 #define ALTO_CARACTER 8
 
-#define MAX_BALAS_ENEMIGAS 1
-#define INTERVALO_DISPARO_ENEMIGO 1.0f
+
+//#define JUGADOR_ANCHO 20
+//#define JUGADOR_ALTO 10
+
+
+#define ANCHO_DISPARO 2
+#define ALTO_DISPARO 10
+
+#define DESPLAZAMIENTO_CANNON_X ((ANCHO_JUGADOR)/2)-((ANCHO_DISPARO)/2)
+
+#define VELOCIDAD_DISPARO_JUGADOR 8
+#define VELOCIDAD_DISPARO_ENEMIGO 5
 
 /* Resolucion logica del juego */
 #define VENTANA_X 256
@@ -33,21 +43,36 @@ static int ronda;
 static tJugador jugador;
 static Vector vBalasJugador;
 static Vector vBalasEnemigo;
+static bool balasJugadorCreadas = false;
+static bool balasEnemigoCreadas = false;
+static float tiempoDisparo = 0;
 
 
 static tSprite sprFondo = {0};
+static tSprite sprJugador = {0};
 //static tSprite sprEscudos;
 //static tSprite sprEnemigos;
 
 static tSonido *sndDisparoJugador;
-static tSonido *sndDisparoEnemigo;
 //static tSonido *sndExplosion;
+static tSonido *sndDisparoEnemigo;
 //static tSonido *sndFinalNivel;
 //static tSonido *sndNaveBajando;
 
 static tFuente *fntPuntaje;
+static const int puntosEnemigo[] = {
+    30, /* ENEMIGO_CALAMAR_VERDE      (0) */
+    20, /* ENEMIGO_CANGREJO_VERDE     (1) */
+    20, /* ENEMIGO_CANGREJO_TURQUESA  (2) */
+    10, /* ENEMIGO_PULPO_TURQUESA    (3) */
+    10  /* ENEMIGO_PULPO_MORADO      (4) */
+};
+#define PUNTAJE_VIDA_EXTRA 1000
+static int proximaVidaExtra = PUNTAJE_VIDA_EXTRA;
 
 /*** FUNCIONES PRIVADAS ***/
+
+//Jugador
 
 static void game_disparar_jugador(void)
 {
@@ -55,7 +80,7 @@ static void game_disparar_jugador(void)
         return;
 
     Bala bala;
-    int x = jugador.x + (JUGADOR_ANCHO / 2) - (BALA_ANCHO / 2);
+    int x = jugador.x + (ANCHO_JUGADOR / 2) - (BALA_ANCHO / 2);
     int y = jugador.y - BALA_ALTO;
 
     bala_crear(&bala, x, y);
@@ -66,19 +91,145 @@ static void game_disparar_jugador(void)
 
 static void game_disparar_enemigo(void)
 {
+    tEnemigos enemigo;
     Bala bala;
-    int xCentro, yBase;
+    int x, y;
 
-    if(VectorCE(&vBalasEnemigo) >= MAX_BALAS_ENEMIGAS)
+    if(VectorCE(&vBalasEnemigo) != 0)
         return;
 
-    if(!enemigo_disparador(&xCentro, &yBase))
+    if(!mapa_enemigos_obtener(&enemigo))
         return;
 
-    bala_crear(&bala, xCentro - (BALA_ANCHO / 2), yBase);
-    vectorInsertarAlFinal(&vBalasEnemigo, &bala);
+    x = enemigo.x + (ENEMIGO_ANCHO / 2) - (BALA_ANCHO / 2);
+    y = enemigo.y + ENEMIGO_ALTO;
 
-    sonidoReproducir(sndDisparoEnemigo);
+    bala_crear(&bala, x, y);
+    if(vectorInsertarAlFinal(&vBalasEnemigo, &bala) == TODO_OK)
+        sonidoReproducir(sndDisparoEnemigo);
+}
+
+static void game_cooldown_enemigo(float delta)
+{
+    tiempoDisparo += delta;
+
+    if(tiempoDisparo >= 0.1f)
+    {
+        tiempoDisparo -= 0.1f;
+
+        if(rand() % 100 < 50)
+            game_disparar_enemigo();
+    }
+}
+
+static int hayColisionBalas(int x1, int y1, int x2, int y2)
+{
+    return x1 < x2 + BALA_ANCHO &&
+    x1 + BALA_ANCHO > x2 &&
+    y1 < y2 + BALA_ALTO &&
+    y1 + BALA_ALTO > y2;
+}
+
+static int hayColisionBalaAJugador(int x1, int y1, int x2, int y2)
+{
+    return x1 < x2 + ANCHO_JUGADOR &&
+           x1 + BALA_ANCHO > x2 &&
+           y1 < y2 + ALTO_JUGADOR &&
+           y1 + BALA_ALTO > y2;
+}
+
+static void game_colisiones(void)
+{
+    unsigned i = 0;
+    unsigned j;
+    Bala balaJ, balaE;
+    int balaJEliminada, tipoEliminado;
+
+    /* Colisiones entre balas del jugador, balas enemigas,
+       escudos y enemigos */
+    while(i < (unsigned)VectorCE(&vBalasJugador))
+    {
+        vectorGetByPos(&vBalasJugador, i, &balaJ);
+        balaJEliminada = 0;
+
+        /* Colision de la bala del jugador contra un escudo */
+        if(mapa_escudo_impactado(balaJ.x, balaJ.y))
+        {
+            vectorRemoveByPos(&vBalasJugador, i);
+            balaJEliminada = 1;
+        }
+
+        /* Colision entre balas del jugador y enemigas */
+        j = 0;
+
+        while(j < (unsigned)VectorCE(&vBalasEnemigo) &&
+              !balaJEliminada)
+        {
+            vectorGetByPos(&vBalasEnemigo, j, &balaE);
+
+            if(hayColisionBalas(balaJ.x, balaJ.y,
+                                balaE.x, balaE.y))
+            {
+                vectorRemoveByPos(&vBalasJugador, i);
+                vectorRemoveByPos(&vBalasEnemigo, j);
+                balaJEliminada = 1;
+            }
+            else
+                j++;
+        }
+
+        /* Colision de la bala del jugador contra un enemigo */
+        if(!balaJEliminada)
+        {
+            if(mapa_enemigo_impactado(balaJ.x, balaJ.y,
+                                      &tipoEliminado))
+            {
+                vectorRemoveByPos(&vBalasJugador, i);
+                balaJEliminada = 1;
+
+                puntaje += puntosEnemigo[tipoEliminado];
+
+                if(puntaje >= proximaVidaExtra)
+                {
+                    jugador.vidas++;
+                    proximaVidaExtra += PUNTAJE_VIDA_EXTRA;
+                }
+            }
+        }
+
+        if(!balaJEliminada)
+            i++;
+    }
+
+    /* Colisiones entre balas enemigas, escudos y jugador */
+    i = 0;
+
+    while(i < (unsigned)VectorCE(&vBalasEnemigo))
+    {
+        vectorGetByPos(&vBalasEnemigo, i, &balaE);
+
+        /* Colision de la bala enemiga contra un escudo */
+        if(mapa_escudo_impactado(balaE.x, balaE.y))
+        {
+            vectorRemoveByPos(&vBalasEnemigo, i);
+        }
+        /* Colision de la bala enemiga contra el jugador */
+        else if(hayColisionBalaAJugador(balaE.x, balaE.y,
+                                        jugador.x, jugador.y))
+        {
+            jugador.vidas--;
+            vectorRemoveByPos(&vBalasEnemigo, i);
+
+            jugador.x = PLAYER_START_X;
+            jugador.y = PLAYER_START_Y;
+        }
+        else
+            i++;
+    }
+
+    /* Colision entre enemigos y jugador */
+    if(mapa_enemigo_toca_jugador(jugador.x, jugador.y))
+        jugador.vidas = 0;
 }
 
 static void game_actualizar_disparos(void)
@@ -91,18 +242,26 @@ static void game_actualizar_disparos(void)
 }
 
 
+/*
+//Mapa
+static void gameMapa(){}
+
+//Recursos
+static void gameEscudos(){}
+static void gameScore(){}
+static void gamePause(){}
+*/
+
 /*** FUNCIONES PUBLICAS ***/
 
 bool gameCrear(SDL_Renderer *render)
 {
-    srand((unsigned)time(NULL));
-
     audioVolumen(30);
     sndDisparoJugador = sonidoCargar("assets/audio/disparo_jugador.wav");
     sndDisparoEnemigo = sonidoCargar("assets/audio/disparo_enemigo.wav");
     fntPuntaje = fuenteCargar("assets/fonts/space_invaders.ttf", 8);
 
-    if(!jugador_cargar(&jugador, render) ||
+    if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
             !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
     {
         gameDestruir();
@@ -122,6 +281,7 @@ bool gameCrear(SDL_Renderer *render)
     }
 
     jugador_iniciar(&jugador);
+    srand((unsigned int)time(NULL));
     puntaje = 0;
     ronda = 1;
 
@@ -130,21 +290,32 @@ bool gameCrear(SDL_Renderer *render)
         gameDestruir();
         return false;
     }
+    balasJugadorCreadas = true;
 
     if(!vectorCrear(&vBalasEnemigo, 8, sizeof(Bala)))
     {
         gameDestruir();
         return false;
     }
+    balasEnemigoCreadas = true;
 
-    if(!enemigo_cargar(render) || !mapa_sprites_cargar(render))
+    if(!mapa_sprites_cargar(render))
     {
         gameDestruir();
         return false;
     }
 
-    enemigo_iniciar();
-    mapa_escudos_iniciar();
+    if(!mapa_enemigos_iniciar())
+    {
+        gameDestruir();
+        return false;
+    }
+
+    if(!mapa_escudos_iniciar())
+    {
+        gameDestruir();
+        return false;
+    }
     ejecutando = true;
 
     return true;
@@ -176,7 +347,8 @@ void gameActualizar(float delta)
 {
     const Uint8 *teclado;
     static float tiempoMovimientoEnemigos = 0.0f;
-    static float tiempoDisparoEnemigo = 0.0f;
+
+    (void)delta;
 
     if(pausa)
         return;
@@ -190,26 +362,20 @@ void gameActualizar(float delta)
         jugador_mover(&jugador, 1);
 
     game_actualizar_disparos();
-
-    tiempoDisparoEnemigo += delta;
-
-    if(tiempoDisparoEnemigo >= INTERVALO_DISPARO_ENEMIGO)
-    {
-        game_disparar_enemigo();
-        tiempoDisparoEnemigo = 0.0f;
-    }
+    game_colisiones();
+    game_cooldown_enemigo(delta);
 
     tiempoMovimientoEnemigos += delta;
 
     if(tiempoMovimientoEnemigos >= 0.5f)
     {
-        enemigo_mover();
+        mapa_enemigos_mover();
         tiempoMovimientoEnemigos -= 0.5f;
     }
 
-    if(!enemigo_hay_activos())
+    if(!mapa_enemigos_hay_activos())
     {
-        /* Ac� ten�s que gestionar la victoria */
+        /*gestionar la victoria */
     }
 }
 
@@ -227,14 +393,19 @@ void gameDibujar(SDL_Renderer *render)
     snprintf(buf, sizeof(buf), "HIGH SCORE %05d", puntaje);
     fuenteDibujar(render, fntPuntaje, buf, 8, 4, blanco);
 
-    snprintf(buf, sizeof(buf), "1UP ROUND %02d", ronda);
+    snprintf(buf, sizeof(buf), "1UP ROUND %02d  LIVES %02d", ronda, jugador.vidas);
     fuenteDibujar(render, fntPuntaje, buf, 8, 17, blanco);
 
     /* Dibujar jugador */
-    jugador_dibujar(&jugador, render);
+    spriteDibujar(render, &sprJugador, jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
+
+    rect.x = jugador.x;
+    rect.y = jugador.y;
+    rect.w = ANCHO_JUGADOR;
+    rect.h = ALTO_JUGADOR;
 
     /* Dibujar enemigos */
-    enemigo_dibujar(render);
+    mapa_enemigos_dibujar(render);
 
     /* Dibujar escudos */
     mapa_escudos_dibujar(render);
@@ -245,7 +416,7 @@ void gameDibujar(SDL_Renderer *render)
     /* Dibujar disparo enemigo */
     vectorMap(&vBalasEnemigo, bala_dibujar, render);
 
-    /* Dibujar pausa */
+    /*Dibujar pausa*/
     if(pausa)
     {
         SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
@@ -257,10 +428,9 @@ void gameDibujar(SDL_Renderer *render)
         rect.h = VENTANA_Y;
         SDL_RenderFillRect(render, &rect);
 
-        fuenteDibujar(render, fntPuntaje, "PAUSA", (VENTANA_X - (ANCHO_CARACTER * 5)) / 2, (VENTANA_Y - ALTO_CARACTER) / 2, blanco);
+        fuenteDibujar(render, fntPuntaje, "PAUSA", (VENTANA_X - (ANCHO_CARACTER * 5)) / 2, (VENTANA_Y - ALTO_CARACTER)/2, blanco);
     }
 }
-
 
 bool gameEjecutando(void)
 {
@@ -270,11 +440,12 @@ bool gameEjecutando(void)
 void gameDestruir(void)
 {
     spriteLiberar(&sprFondo);
-    jugador_destruir(&jugador);
+    spriteLiberar(&sprJugador);
     //spriteLiberar(&sprEnemigos);
     //spriteLiberar(&sprEscudos);
 
-    enemigo_liberar();
+    mapa_escudos_destruir();
+    mapa_enemigos_destruir();
     mapa_sprites_liberar();
 
     sonidoLiberar(sndDisparoJugador);
@@ -287,8 +458,17 @@ void gameDestruir(void)
     //sndFinalNivel = NULL;
     //sndNaveBajando = NULL;
 
-    vectorDestruir(&vBalasJugador);
-    vectorDestruir(&vBalasEnemigo);
+     if(balasJugadorCreadas)
+     {
+        vectorDestruir(&vBalasJugador);
+        balasJugadorCreadas = false;
+     }
+
+    if(balasEnemigoCreadas)
+    {
+        vectorDestruir(&vBalasEnemigo);
+        balasEnemigoCreadas = false;
+    }
 
     fuenteLiberar(fntPuntaje);
     fntPuntaje = NULL;
