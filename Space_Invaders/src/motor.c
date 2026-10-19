@@ -1,6 +1,8 @@
 #include "motor.h"
 #define FPS 60
 #define FRAME_TIME (1000 / FPS)
+#define LOGICO_ANCHO 256
+#define LOGICO_ALTO 240
 #define POS_X SDL_WINDOWPOS_CENTERED
 #define POS_Y SDL_WINDOWPOS_CENTERED
 
@@ -61,7 +63,7 @@ static bool crearRenderizador(void)
     if(renderizador == NULL)
         return false;
 
-    SDL_RenderSetLogicalSize(renderizador,256,240);
+    SDL_RenderSetLogicalSize(renderizador, LOGICO_ANCHO, LOGICO_ALTO);
 
     return true;
 }
@@ -148,6 +150,16 @@ int motorAlto(void)
 int motorAncho(void)
 {
     return ancho;
+}
+
+int motorAltoLogico(void)
+{
+    return LOGICO_ALTO;
+}
+
+int motorAnchoLogico(void)
+{
+    return LOGICO_ANCHO;
 }
 
 float motorIniciarFrame(void)
