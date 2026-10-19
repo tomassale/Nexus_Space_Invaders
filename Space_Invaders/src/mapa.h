@@ -31,5 +31,6 @@ void mapa_escudos_dibujar(SDL_Renderer *render);
 void mapa_enemigos_dibujar(SDL_Renderer *render);
 bool mapa_sprites_cargar(SDL_Renderer *render);
 int mapa_enemigos_hay_activos(void);
+bool mapa_enemigo_disparador(int *xCentro, int *yBase);
 void mapa_sprites_liberar(void);
 #endif // MAPA_H_INCLUDED

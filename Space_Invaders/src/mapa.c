@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <stdlib.h>
 #include "mapa.h"
 #include "game.h"
 #include "jugador.h"
@@ -250,6 +251,44 @@ int mapa_enemigos_hay_activos(void)
     }
 
     return hay;
+}
+
+bool mapa_enemigo_disparador(int *xCentro, int *yBase)
+{
+    int columnasActivas[COLUMNAS_ENEMIGOS];
+    int cantidad = 0;
+    int fila, columna, elegida;
+
+    /* Recolectar columnas que tengan al menos un enemigo activo */
+    for(columna = 0; columna < COLUMNAS_ENEMIGOS; columna++)
+    {
+        for(fila = FILAS_ENEMIGOS - 1; fila >= 0; fila--)
+        {
+            if(enemigos[fila][columna].activo)
+            {
+                columnasActivas[cantidad++] = columna;
+                break;
+            }
+        }
+    }
+
+    if(cantidad == 0)
+        return false;
+
+    elegida = columnasActivas[rand() % cantidad];
+
+    /* El enemigo mas bajo de esa columna es el que dispara */
+    for(fila = FILAS_ENEMIGOS - 1; fila >= 0; fila--)
+    {
+        if(enemigos[fila][elegida].activo)
+        {
+            *xCentro = enemigos[fila][elegida].x + ENEMIGO_ANCHO / 2;
+            *yBase = enemigos[fila][elegida].y + ENEMIGO_ALTO;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void mapa_sprites_liberar(void)

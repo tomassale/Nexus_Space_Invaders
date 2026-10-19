@@ -14,6 +14,8 @@ void motorDestruir(void);
 SDL_Renderer* motorRenderizador(void);
 int motorAlto(void);
 int motorAncho(void);
+int motorAltoLogico(void);
+int motorAnchoLogico(void);
 float motorIniciarFrame(void);
 float motorDelta(void);
 void motorEsperar(void);
