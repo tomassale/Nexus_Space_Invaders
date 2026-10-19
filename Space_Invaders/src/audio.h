@@ -11,7 +11,8 @@ bool audioCrear(void);
 void audioDestruir(void);
 
 tSonido* sonidoCargar(const char *ruta);
-void sonidoReproducir(tSonido *s);
+int sonidoReproducir(tSonido *s);
+bool sonidoSonando(int);
 void sonidoLiberar(tSonido *s);
 
 bool musicaReproducir(const char *ruta, bool bucle);

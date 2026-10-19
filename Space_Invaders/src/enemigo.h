@@ -18,6 +18,9 @@
 #define ENEMIGO_PULPO_TURQUESA      3
 #define ENEMIGO_PULPO_MORADO        4
 
+/* Altura a la que la formacion llega a los escudos: ahi se pinta en rojo */
+#define ENEMIGO_ALTURA_ROJA 162
+
 // Estructura de UN enemigo de la formacion
 typedef struct
 {
@@ -39,6 +42,7 @@ int  enemigo_iniciar(Vector *vEnemigos);
 
 /* Formacion: mover y dibujar todos juntos */
 void enemigo_mover(Vector *vEnemigos);
+float enemigo_intervalo_movimiento(Vector *vEnemigos); /* segundos entre pasos */
 void enemigo_dibujar(Vector *vEnemigos, SDL_Renderer *render);
 int  enemigo_hay_activos(Vector *vEnemigos);
 

@@ -74,6 +74,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/bala.h" />
+		<Unit filename="src/colision.h" />
 		<Unit filename="src/enemigo.c">
 			<Option compilerVar="CC" />
 		</Unit>

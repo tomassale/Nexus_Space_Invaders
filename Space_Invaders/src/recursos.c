@@ -1,6 +1,5 @@
-#include <SDL.h>
 #include "recursos.h"
-#include "game.h"
-#include "jugador.h"
-#include "escudo.h"
-#include "motor.h"
+
+/* Modulo de recursos: aca van a centralizarse la carga y liberacion de
+   imagenes (y sonidos) del juego. Por ahora queda como placeholder:
+   las entidades siguen cargando sus propios sprites. */

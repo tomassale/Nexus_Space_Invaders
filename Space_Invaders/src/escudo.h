@@ -41,7 +41,10 @@ int  escudo_iniciar(void);
 void escudo_dibujar(SDL_Renderer *render);
 void escudo_destruir(void);
 
-/* Colision con una bala (devuelve 1 si le pego a alguna parte) */
-int  escudo_impactado(int x, int y);
+/* Danio: el juego decide quien golpea y el escudo resuelve que partes se rompen.
+   - Una bala rompe UNA parte (la primera que toca).
+   - Un enemigo (rectangulo mas grande) rompe TODAS las que toca. */
+int  escudo_impactado(int x, int y, int ancho, int alto);
+void escudo_romper_rect(int x, int y, int ancho, int alto);
 
 #endif // ESCUDO_H_INCLUDED

@@ -1,9 +1,10 @@
 #include <SDL.h>
+#include <stdbool.h>
+
 #include "escudo.h"
-#include "bala.h"      /* BALA_ANCHO / BALA_ALTO: los usa la colision */
+#include "colision.h"
 #include "sprites.h"
 #include "vector.h"
-#include <stdbool.h>
 
 /* Posicion y separacion de los escudos en pantalla */
 #define ESCUDOS_INICIO_X 40
@@ -53,8 +54,8 @@ int escudo_iniciar(void)
         {
             for(columna = 0; columna < COLUMNAS_ESCUDO; columna++)
             {
-                parte.x = escudo.x + columna * 5;
-                parte.y = escudo.y + fila * 5;
+                parte.x = escudo.x + columna * PARTE_ESCUDO_ANCHO;
+                parte.y = escudo.y + fila * PARTE_ESCUDO_ALTO;
                 parte.activo = 1;
 
                 if(vectorInsertarAlFinal(&vEscudosPartes, &parte) != TODO_OK)
@@ -67,15 +68,6 @@ int escudo_iniciar(void)
     }
 
     return 1;
-}
-
-/* Colision rectangular entre la bala y una parte del escudo */
-static int hayColisionBalaAEscudo(int x1, int y1, int x2, int y2)
-{
-    return x1 < x2 + PARTE_ESCUDO_ANCHO &&
-    x1 + BALA_ANCHO > x2 &&
-    y1 < y2 + PARTE_ESCUDO_ALTO &&
-    y1 + BALA_ALTO > y2;
 }
 
 /* Apaga UNA parte del escudo */
@@ -113,57 +105,115 @@ static void actualizarEstadoEscudo(unsigned indiceEscudo)
        vectorGetByPos(&vEscudos, indiceEscudo, &escudo))
     {
         escudo.activo = 0;
+
         vectorUpdateByPos(&vEscudos, indiceEscudo, &escudo);
     }
 }
 
-/* Busca que parte del escudo golpeo la bala y la destruye */
-int escudo_impactado(int x, int y)
+/* Indice de la primera parte viva que choca con el rectangulo, o -1 */
+static int buscarParteGolpeada(int x, int y, int ancho, int alto)
 {
-    unsigned i = 0;
-    unsigned cantidad = VectorCE(&vEscudosPartes);
+    unsigned i;
+    unsigned cantidad = (unsigned)VectorCE(&vEscudosPartes);
     tParteEscudo parte;
-    unsigned indiceEscudo;
 
-    while(i < cantidad)
+    for(i = 0; i < cantidad; i++)
     {
-        vectorGetByPos(&vEscudosPartes, i, &parte);
-
-        if(parte.activo && hayColisionBalaAEscudo(x, y, parte.x, parte.y))
-        {
-            destruirParteEscudo(i);
-
-            /* A que escudo pertenece la parte golpeada */
-            indiceEscudo = i / PARTES_POR_ESCUDO;
-            actualizarEstadoEscudo(indiceEscudo);
-            return 1;
-        }
-
-        i++;
+        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+           parte.activo &&
+           hay_choque(x, y, ancho, alto,
+                      parte.x, parte.y, PARTE_ESCUDO_ANCHO, PARTE_ESCUDO_ALTO))
+            return (int)i;
     }
 
-    return 0;
+    return -1;
 }
 
-/* Accion que el TDA aplica a cada escudo; el render llega en "datos" */
-static int dibujarEscudo(void *e, void *datos)
+/* Una bala: rompe solo la primera parte que toca */
+int escudo_impactado(int x, int y, int ancho, int alto)
 {
-    tEscudo *escudo = e;
-    SDL_Renderer *render = datos;
+    int indice = buscarParteGolpeada(x, y, ancho, alto);
 
-    if(escudo->activo)
-    {
-        spriteDibujar(render, &sprEscudo,
-                      escudo->x, escudo->y,
-                      ESCUDOS_ANCHO, ESCUDOS_ALTO);
-    }
+    if(indice < 0)
+        return 0;
+
+    destruirParteEscudo((unsigned)indice);
+
+    /* A que escudo pertenece la parte golpeada */
+    actualizarEstadoEscudo((unsigned)indice / PARTES_POR_ESCUDO);
 
     return 1;
 }
 
+/* Un enemigo: rompe todas las partes que toca de una sola vez */
+void escudo_romper_rect(int x, int y, int ancho, int alto)
+{
+    unsigned i;
+    unsigned cantidad = (unsigned)VectorCE(&vEscudosPartes);
+    tParteEscudo parte;
+
+    for(i = 0; i < cantidad; i++)
+    {
+        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+           parte.activo &&
+           hay_choque(x, y, ancho, alto,
+                      parte.x, parte.y, PARTE_ESCUDO_ANCHO, PARTE_ESCUDO_ALTO))
+        {
+            destruirParteEscudo(i);
+            actualizarEstadoEscudo(i / PARTES_POR_ESCUDO);
+        }
+    }
+}
+
+/* Dibuja solo las partes vivas, recortando cada una del sprite completo */
 void escudo_dibujar(SDL_Renderer *render)
 {
-    vectorMap(&vEscudos, dibujarEscudo, render);
+    unsigned i = 0;
+    unsigned cantidad = (unsigned)VectorCE(&vEscudosPartes);
+    unsigned indiceEscudo;
+    unsigned indiceLocal;
+    unsigned fila;
+    unsigned columna;
+
+    tParteEscudo parte;
+    tEscudo escudo;
+
+    SDL_Rect origen;
+    SDL_Rect destino;
+
+    while(i < cantidad)
+    {
+        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+           parte.activo)
+        {
+            indiceEscudo = i / PARTES_POR_ESCUDO;
+            indiceLocal = i % PARTES_POR_ESCUDO;
+
+            if(vectorGetByPos(&vEscudos, indiceEscudo, &escudo) &&
+               escudo.activo)
+            {
+                fila = indiceLocal / COLUMNAS_ESCUDO;
+                columna = indiceLocal % COLUMNAS_ESCUDO;
+
+                origen.x = columna * PARTE_ESCUDO_ANCHO;
+                origen.y = fila * PARTE_ESCUDO_ALTO;
+                origen.w = PARTE_ESCUDO_ANCHO;
+                origen.h = PARTE_ESCUDO_ALTO;
+
+                destino.x = parte.x;
+                destino.y = parte.y;
+                destino.w = PARTE_ESCUDO_ANCHO;
+                destino.h = PARTE_ESCUDO_ALTO;
+
+                SDL_RenderCopy(render,
+                               sprEscudo.textura,
+                               &origen,
+                               &destino);
+            }
+        }
+
+        i++;
+    }
 }
 
 void escudo_destruir(void)
