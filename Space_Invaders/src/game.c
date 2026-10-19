@@ -41,11 +41,14 @@ static int puntaje;
 static int ronda;
 
 
+/* Colecciones: el juego es dueno de los datos; los modulos solo saben usarlos */
 static tJugador jugador;
 static Vector vBalasJugador;
 static Vector vBalasEnemigo;
+static Vector vEnemigos;
 static bool balasJugadorCreadas = false;
 static bool balasEnemigoCreadas = false;
+static bool enemigosCreados = false;
 static float tiempoDisparo = 0;
 
 
@@ -99,7 +102,7 @@ static void game_disparar_enemigo(void)
     if(VectorCE(&vBalasEnemigo) != 0)
         return;
 
-    if(!enemigo_obtener(&enemigo))
+    if(!enemigo_obtener(&vEnemigos, &enemigo))
         return;
 
     x = enemigo.x + (ENEMIGO_ANCHO / 2) - (BALA_ANCHO / 2);
@@ -182,7 +185,7 @@ static void game_colisiones(void)
         /* Colision de la bala del jugador contra un enemigo */
         if(!balaJEliminada)
         {
-            if(enemigo_impactado(balaJ.x, balaJ.y,
+            if(enemigo_impactado(&vEnemigos, balaJ.x, balaJ.y,
                                  &tipoEliminado))
             {
                 vectorRemoveByPos(&vBalasJugador, i);
@@ -229,7 +232,7 @@ static void game_colisiones(void)
     }
 
     /* Colision entre enemigos y jugador */
-    if(enemigo_toca_jugador(jugador.x, jugador.y))
+    if(enemigo_toca_jugador(&vEnemigos, jugador.x, jugador.y))
         jugador.vidas = 0;
 }
 
@@ -306,11 +309,12 @@ bool gameCrear(SDL_Renderer *render)
         return false;
     }
 
-    if(!enemigo_iniciar())
+    if(!enemigo_iniciar(&vEnemigos))
     {
         gameDestruir();
         return false;
     }
+    enemigosCreados = true;
 
     if(!mapa_escudos_iniciar())
     {
@@ -370,11 +374,11 @@ void gameActualizar(float delta)
 
     if(tiempoMovimientoEnemigos >= 0.5f)
     {
-        enemigo_mover();
+        enemigo_mover(&vEnemigos);
         tiempoMovimientoEnemigos -= 0.5f;
     }
 
-    if(!enemigo_hay_activos())
+    if(!enemigo_hay_activos(&vEnemigos))
     {
         /*gestionar la victoria */
     }
@@ -406,7 +410,7 @@ void gameDibujar(SDL_Renderer *render)
     rect.h = ALTO_JUGADOR;
 
     /* Dibujar enemigos */
-    enemigo_dibujar(render);
+    enemigo_dibujar(&vEnemigos, render);
 
     /* Dibujar escudos */
     mapa_escudos_dibujar(render);
@@ -446,7 +450,6 @@ void gameDestruir(void)
     //spriteLiberar(&sprEscudos);
 
     mapa_escudos_destruir();
-    enemigo_destruir();
     enemigo_liberar();
     mapa_sprites_liberar();
 
@@ -470,6 +473,12 @@ void gameDestruir(void)
     {
         vectorDestruir(&vBalasEnemigo);
         balasEnemigoCreadas = false;
+    }
+
+    if(enemigosCreados)
+    {
+        vectorDestruir(&vEnemigos);
+        enemigosCreados = false;
     }
 
     fuenteLiberar(fntPuntaje);

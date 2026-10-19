@@ -1,15 +1,14 @@
 #include <SDL.h>
-#include "enemigo.h"
-#include "bala.h"      /* BALA_ANCHO / BALA_ALTO: los usa la colision */
-#include "jugador.h"   /* ANCHO_JUGADOR / ALTO_JUGADOR: los usa la colision */
-#include "sprites.h"
-#include "vector.h"
 #include <stdbool.h>
 
-/* =========================================================
- * Formacion clasica del Space Invaders (5 filas x 11 columnas).
- * Son datos privados: nadie afuera necesita saber como esta armada.
- * ========================================================= */
+#include "vector.h"
+
+#include "enemigo.h"
+#include "jugador.h"   /* ANCHO_JUGADOR / ALTO_JUGADOR: los usa la colision */
+#include "sprites.h"
+#include "bala.h"      /* BALA_ANCHO / BALA_ALTO: los usa la colision */
+
+/* Formacion clasica del Space Invaders (5 filas x 11 columnas) */
 #define FILAS_ENEMIGOS 5
 #define COLUMNAS_ENEMIGOS 11
 #define INICIO_X 20
@@ -24,21 +23,18 @@
 
 #define DURACION_ELIMINADO 250
 
-/* =========================================================
- * Estado del modulo: la coleccion de enemigos vive aca adentro.
- * El TDA Vector se encarga de crecer y de compactar la memoria.
- * ========================================================= */
-static Vector vEnemigos;
+/* La coleccion de enemigos (vEnemigos) es del juego: llega por parametro. */
 
+/* Sprites de cada bicho: [0] normal, [1] animado */
 static tSprite sprCalamar[2] = {0};
 static tSprite sprCangrejo[2] = {0};
 static tSprite sprPulpo[2] = {0};
 static tSprite sprEliminado = {0};
 
 static int frameAnimacion = 0;   /* alterna el sprite normal y el animado */
-static int direccion = 1;        /* sentido horizontal de la formacion (+1 / -1) */
+static int direccion = 1;        /* sentido horizontal de la formacion (+1/-1) */
 
-/* Feedback de muerte: se dibuja el sprite "eliminado" unos ms donde murio */
+/* Feedback de muerte: se dibuja el "eliminado" unos ms donde murio */
 static Uint32 tiempoEliminado;
 static int eliminadoX;
 static int eliminadoY;
@@ -55,7 +51,7 @@ static const int tiposNivel1[FILAS_ENEMIGOS] =
 };
 
 /* =========================================================
- * Ciclo de vida
+ * Sprites
  * ========================================================= */
 bool enemigo_cargar(SDL_Renderer *render)
 {
@@ -91,43 +87,6 @@ bool enemigo_cargar(SDL_Renderer *render)
     return true;
 }
 
-int enemigo_iniciar(void)
-{
-    int fila, columna;
-    tEnemigo enemigo;
-
-    /* La coleccion es un Vector: capacidad inicial = la formacion entera */
-    if(!vectorCrear(&vEnemigos,
-                    FILAS_ENEMIGOS * COLUMNAS_ENEMIGOS,
-                    sizeof(tEnemigo)))
-        return 0;
-
-    /* Se cargan los 55 enemigos de una: un tipo por fila */
-    for(fila = 0; fila < FILAS_ENEMIGOS; fila++)
-    {
-        for(columna = 0; columna < COLUMNAS_ENEMIGOS; columna++)
-        {
-            enemigo.x = INICIO_X + columna * SEPARACION_X;
-            enemigo.y = INICIO_Y + fila * SEPARACION_Y;
-            enemigo.activo = 1;
-            enemigo.tipo = tiposNivel1[fila];
-
-            if(vectorInsertarAlFinal(&vEnemigos, &enemigo) != TODO_OK)
-            {
-                vectorDestruir(&vEnemigos);
-                return 0;
-            }
-        }
-    }
-
-    return 1;
-}
-
-void enemigo_destruir(void)
-{
-    vectorDestruir(&vEnemigos);
-}
-
 void enemigo_liberar(void)
 {
     spriteLiberar(&sprCalamar[0]);
@@ -140,10 +99,47 @@ void enemigo_liberar(void)
 }
 
 /* =========================================================
+ * Formacion
+ * ========================================================= */
+
+/* Crea la coleccion en el Vector que le pasa el juego y la llena con la formacion */
+int enemigo_iniciar(Vector *vEnemigos)
+{
+    int fila, columna;
+    tEnemigo enemigo;
+
+    /* Capacidad inicial = la formacion entera */
+    if(!vectorCrear(vEnemigos,
+                    FILAS_ENEMIGOS * COLUMNAS_ENEMIGOS,
+                    sizeof(tEnemigo)))
+        return 0;
+
+    /* Se cargan todos los enemigos de una: un tipo por fila */
+    for(fila = 0; fila < FILAS_ENEMIGOS; fila++)
+    {
+        for(columna = 0; columna < COLUMNAS_ENEMIGOS; columna++)
+        {
+            enemigo.x = INICIO_X + columna * SEPARACION_X;
+            enemigo.y = INICIO_Y + fila * SEPARACION_Y;
+            enemigo.activo = 1;
+            enemigo.tipo = tiposNivel1[fila];
+
+            if(vectorInsertarAlFinal(vEnemigos, &enemigo) != TODO_OK)
+            {
+                vectorDestruir(vEnemigos);
+                return 0;
+            }
+        }
+    }
+
+    return 1;
+}
+
+/* =========================================================
  * Dibujado
  * ========================================================= */
 
-/* Accion que el TDA aplica a CADA enemigo; el render llega en "datos" */
+/* Accion del TDA: dibuja UN enemigo; el render llega en "datos" */
 static int dibujarEnemigo(void *elem, void *datos)
 {
     tEnemigo *enemigo = elem;
@@ -210,10 +206,10 @@ static void dibujarEliminado(SDL_Renderer *render)
     }
 }
 
-void enemigo_dibujar(SDL_Renderer *render)
+void enemigo_dibujar(Vector *vEnemigos, SDL_Renderer *render)
 {
     /* vectorMap recorre la coleccion y llama a dibujarEnemigo por cada uno */
-    vectorMap(&vEnemigos, dibujarEnemigo, render);
+    vectorMap(vEnemigos, dibujarEnemigo, render);
     dibujarEliminado(render);
 }
 
@@ -221,7 +217,7 @@ void enemigo_dibujar(SDL_Renderer *render)
  * Movimiento
  * ========================================================= */
 
-/* Accion: avisa si algun enemigo toco un borde de la pantalla */
+/* Accion del TDA: avisa si algun enemigo toco un borde de la pantalla */
 static int detectarBorde(void *elem, void *datos)
 {
     tEnemigo *enemigo = elem;
@@ -237,7 +233,7 @@ static int detectarBorde(void *elem, void *datos)
     return 1;
 }
 
-/* Accion: mueve un enemigo al costado y, si se invirtio el sentido, lo baja */
+/* Accion del TDA: mueve un enemigo al costado y, si se invirtio, lo baja */
 static int moverEnemigo(void *elem, void *datos)
 {
     tEnemigo *enemigo = elem;
@@ -254,30 +250,30 @@ static int moverEnemigo(void *elem, void *datos)
     return 1;
 }
 
-void enemigo_mover(void)
+void enemigo_mover(Vector *vEnemigos)
 {
     int llegoAlBorde = 0;
 
     frameAnimacion = 1 - frameAnimacion;
 
     /* Pasada 1: preguntar si alguien toco el borde */
-    vectorMap(&vEnemigos, detectarBorde, &llegoAlBorde);
+    vectorMap(vEnemigos, detectarBorde, &llegoAlBorde);
 
     if(llegoAlBorde)
         direccion *= -1;
 
     /* Pasada 2: mover toda la formacion junta */
-    vectorMap(&vEnemigos, moverEnemigo, &llegoAlBorde);
+    vectorMap(vEnemigos, moverEnemigo, &llegoAlBorde);
 }
 
-int enemigo_hay_activos(void)
+int enemigo_hay_activos(Vector *vEnemigos)
 {
     unsigned i;
     tEnemigo enemigo;
 
-    for(i = 0; i < (unsigned)VectorCE(&vEnemigos); i++)
+    for(i = 0; i < (unsigned)VectorCE(vEnemigos); i++)
     {
-        if(vectorGetByPos(&vEnemigos, i, &enemigo) &&
+        if(vectorGetByPos(vEnemigos, i, &enemigo) &&
            enemigo.activo)
             return 1;
     }
@@ -290,14 +286,14 @@ int enemigo_hay_activos(void)
  * ========================================================= */
 
 /* Devuelve un enemigo al azar para que dispare */
-int enemigo_obtener(tEnemigo *enemigo)
+int enemigo_obtener(Vector *vEnemigos, tEnemigo *enemigo)
 {
     unsigned pos;
     unsigned cantidad;
     tEnemigo actual;
     int intentos = 0;
 
-    cantidad = (unsigned)VectorCE(&vEnemigos);
+    cantidad = (unsigned)VectorCE(vEnemigos);
 
     if(cantidad == 0 || enemigo == NULL)
         return 0;
@@ -306,7 +302,7 @@ int enemigo_obtener(tEnemigo *enemigo)
     {
         pos = (unsigned)(rand() % cantidad);
 
-        if(vectorGetByPos(&vEnemigos, pos, &actual))
+        if(vectorGetByPos(vEnemigos, pos, &actual))
         {
             if(actual.activo)
             {
@@ -331,15 +327,15 @@ static int hayColisionBalaAEnemigo(int x1, int y1, int x2, int y2)
 }
 
 /* Busca que enemigo golpeo la bala; lo borra de la coleccion y avisa el tipo */
-int enemigo_impactado(int x, int y, int* tipoEliminado)
+int enemigo_impactado(Vector *vEnemigos, int x, int y, int* tipoEliminado)
 {
     unsigned i = 0;
-    unsigned cantidad = VectorCE(&vEnemigos);
+    unsigned cantidad = VectorCE(vEnemigos);
     tEnemigo enemigo;
 
     while(i < cantidad)
     {
-        vectorGetByPos(&vEnemigos, i, &enemigo);
+        vectorGetByPos(vEnemigos, i, &enemigo);
 
         if(hayColisionBalaAEnemigo(x,y,enemigo.x,enemigo.y))
         {
@@ -349,7 +345,7 @@ int enemigo_impactado(int x, int y, int* tipoEliminado)
             mostrarEliminado = 1;
             tiempoEliminado = SDL_GetTicks();
 
-            vectorRemoveByPos(&vEnemigos,i);
+            vectorRemoveByPos(vEnemigos,i);
             return 1;
         }
 
@@ -368,14 +364,14 @@ static int hayToqueEnemigoAJugador(int xE, int yE, int xJ, int yJ)
     yE + ENEMIGO_ALTO > yJ;
 }
 
-int enemigo_toca_jugador(int x, int y)
+int enemigo_toca_jugador(Vector *vEnemigos, int x, int y)
 {
     unsigned i = 0;
     tEnemigo enemigo;
 
-    while(i < (unsigned)VectorCE(&vEnemigos))
+    while(i < (unsigned)VectorCE(vEnemigos))
     {
-        vectorGetByPos(&vEnemigos, i, &enemigo);
+        vectorGetByPos(vEnemigos, i, &enemigo);
 
         if(enemigo.activo &&
            hayToqueEnemigoAJugador(enemigo.x, enemigo.y, x, y))

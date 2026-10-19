@@ -3,21 +3,22 @@
 
 #include <stdbool.h>
 #include <SDL.h>
+#include "vector.h"
 
-/* Tamano en pantalla de cada enemigo */
+// Tamano en pantalla de cada enemigo
 #define ENEMIGO_ANCHO 12
 #define ENEMIGO_ALTO  8
+#define ENEMIGO_VELOCIDAD 1
+#define ENEMIGO_DESCENSO 16
 
-/* Tipo de enemigo: define que sprite usa y cuanto puntaje otorga */
+// Tipo de enemigo: define que sprite usa y cuanto puntaje otorga
 #define ENEMIGO_CALAMAR_VERDE       0
 #define ENEMIGO_CANGREJO_VERDE      1
 #define ENEMIGO_CANGREJO_TURQUESA   2
 #define ENEMIGO_PULPO_TURQUESA      3
 #define ENEMIGO_PULPO_MORADO        4
 
-/* Un enemigo de la formacion.
-   La coleccion completa se guarda en un Vector privado del modulo, asi que
-   desde afuera solo se pide "un enemigo" cuando hace falta. */
+// Estructura de UN enemigo de la formacion
 typedef struct
 {
     int x;
@@ -26,20 +27,24 @@ typedef struct
     int tipo;
 }tEnemigo;
 
-/* Ciclo de vida */
-bool enemigo_cargar(SDL_Renderer *render);   /* carga los sprites */
-int  enemigo_iniciar(void);                  /* crea la coleccion y arma la formacion */
-void enemigo_destruir(void);                 /* libera la coleccion */
-void enemigo_liberar(void);                  /* libera los sprites */
+/* La coleccion de enemigos (un Vector) la declara y la guarda el juego.
+   El modulo solo sabe como crearla y como trabajar con ella. */
 
-/* Operaciones sobre la coleccion */
-void enemigo_mover(void);
-void enemigo_dibujar(SDL_Renderer *render);
-int  enemigo_hay_activos(void);
+/* Sprites */
+bool enemigo_cargar(SDL_Renderer *render);
+void enemigo_liberar(void);
+
+/* Formacion: crea la coleccion y le carga los enemigos */
+int  enemigo_iniciar(Vector *vEnemigos);
+
+/* Formacion: mover y dibujar todos juntos */
+void enemigo_mover(Vector *vEnemigos);
+void enemigo_dibujar(Vector *vEnemigos, SDL_Renderer *render);
+int  enemigo_hay_activos(Vector *vEnemigos);
 
 /* Consultas que usa la logica del juego */
-int  enemigo_obtener(tEnemigo *enemigo);                  /* elige uno para disparar */
-int  enemigo_impactado(int x, int y, int *tipoEliminado); /* colision con la bala del jugador */
-int  enemigo_toca_jugador(int x, int y);                  /* colision con el jugador */
+int  enemigo_obtener(Vector *vEnemigos, tEnemigo *enemigo);         /* elige uno para disparar */
+int  enemigo_impactado(Vector *vEnemigos, int x, int y, int *tipoEliminado); /* bala del jugador */
+int  enemigo_toca_jugador(Vector *vEnemigos, int x, int y);                  /* choque con el jugador */
 
 #endif // ENEMIGO_H_INCLUDED
