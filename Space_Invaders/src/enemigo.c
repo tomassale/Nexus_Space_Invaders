@@ -4,9 +4,7 @@
 #include "vector.h"
 
 #include "enemigo.h"
-#include "jugador.h"   /* ANCHO_JUGADOR / ALTO_JUGADOR: los usa la colision */
 #include "sprites.h"
-#include "bala.h"      /* BALA_ANCHO / BALA_ALTO: los usa la colision */
 
 /* Formacion clasica del Space Invaders (5 filas x 11 columnas) */
 #define FILAS_ENEMIGOS 5
@@ -317,68 +315,11 @@ int enemigo_obtener(Vector *vEnemigos, tEnemigo *enemigo)
     return 0;
 }
 
-/* Colision rectangular entre la bala del jugador y un enemigo */
-static int hayColisionBalaAEnemigo(int x1, int y1, int x2, int y2)
+/* Marca donde murio un enemigo para dibujar el "eliminado" unos ms */
+void enemigo_marcar_eliminado(int x, int y)
 {
-    return x1 < x2 + ENEMIGO_ANCHO &&
-    x1 + BALA_ANCHO > x2 &&
-    y1 < y2 + ENEMIGO_ALTO &&
-    y1 + BALA_ALTO > y2;
-}
-
-/* Busca que enemigo golpeo la bala; lo borra de la coleccion y avisa el tipo */
-int enemigo_impactado(Vector *vEnemigos, int x, int y, int* tipoEliminado)
-{
-    unsigned i = 0;
-    unsigned cantidad = VectorCE(vEnemigos);
-    tEnemigo enemigo;
-
-    while(i < cantidad)
-    {
-        vectorGetByPos(vEnemigos, i, &enemigo);
-
-        if(hayColisionBalaAEnemigo(x,y,enemigo.x,enemigo.y))
-        {
-            eliminadoX=enemigo.x;
-            eliminadoY=enemigo.y;
-            *tipoEliminado=enemigo.tipo;
-            mostrarEliminado = 1;
-            tiempoEliminado = SDL_GetTicks();
-
-            vectorRemoveByPos(vEnemigos,i);
-            return 1;
-        }
-
-        i++;
-    }
-
-    return 0;
-}
-
-/* Colision rectangular entre un enemigo y el jugador */
-static int hayToqueEnemigoAJugador(int xE, int yE, int xJ, int yJ)
-{
-    return xE < xJ + ANCHO_JUGADOR &&
-    xE + ENEMIGO_ANCHO > xJ &&
-    yE < yJ + ALTO_JUGADOR &&
-    yE + ENEMIGO_ALTO > yJ;
-}
-
-int enemigo_toca_jugador(Vector *vEnemigos, int x, int y)
-{
-    unsigned i = 0;
-    tEnemigo enemigo;
-
-    while(i < (unsigned)VectorCE(vEnemigos))
-    {
-        vectorGetByPos(vEnemigos, i, &enemigo);
-
-        if(enemigo.activo &&
-           hayToqueEnemigoAJugador(enemigo.x, enemigo.y, x, y))
-            return 1;
-
-        i++;
-    }
-
-    return 0;
+    eliminadoX = x;
+    eliminadoY = y;
+    mostrarEliminado = 1;
+    tiempoEliminado = SDL_GetTicks();
 }

@@ -43,8 +43,7 @@ void enemigo_dibujar(Vector *vEnemigos, SDL_Renderer *render);
 int  enemigo_hay_activos(Vector *vEnemigos);
 
 /* Consultas que usa la logica del juego */
-int  enemigo_obtener(Vector *vEnemigos, tEnemigo *enemigo);         /* elige uno para disparar */
-int  enemigo_impactado(Vector *vEnemigos, int x, int y, int *tipoEliminado); /* bala del jugador */
-int  enemigo_toca_jugador(Vector *vEnemigos, int x, int y);                  /* choque con el jugador */
+int  enemigo_obtener(Vector *vEnemigos, tEnemigo *enemigo); /* elige uno para disparar */
+void enemigo_marcar_eliminado(int x, int y);                /* feedback de muerte (250 ms) */
 
 #endif // ENEMIGO_H_INCLUDED
