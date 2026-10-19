@@ -50,8 +50,6 @@ static float tiempoDisparo = 0;
 static tSprite sprFondo = {0};
 static tSprite sprJugador = {0};
 static tSprite sprMenu = {0};
-//static tSprite sprEscudos;
-//static tSprite sprEnemigos;
 
 static tSonido *sndDisparoJugador;
 static tSonido *sndDisparoEnemigo;
@@ -649,8 +647,6 @@ void gameDestruir(void)
     spriteLiberar(&sprJugador);
     spriteLiberar(&sprMenu);
     musicaDetener();
-    //spriteLiberar(&sprEnemigos);
-    //spriteLiberar(&sprEscudos);
 
     escudo_destruir();
     enemigo_liberar();
@@ -661,8 +657,6 @@ void gameDestruir(void)
     sonidoLiberar(sndFinalNivel);
     for(i = 0; i < CANT_PASOS; i++)
         sonidoLiberar(sndNaveBajando[i]);
-
-
 
     if(balasJugadorCreadas)
     {

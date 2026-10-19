@@ -8,8 +8,6 @@
 // Tamano en pantalla de cada enemigo
 #define ENEMIGO_ANCHO 12
 #define ENEMIGO_ALTO  8
-#define ENEMIGO_VELOCIDAD 1
-#define ENEMIGO_DESCENSO 16
 
 // Tipo de enemigo: define que sprite usa y cuanto puntaje otorga
 #define ENEMIGO_CALAMAR_VERDE       0
