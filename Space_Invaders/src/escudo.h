@@ -1,5 +1,5 @@
-#ifndef MAPA_H_INCLUDED
-#define MAPA_H_INCLUDED
+#ifndef ESCUDO_H_INCLUDED
+#define ESCUDO_H_INCLUDED
 
 #include <stdbool.h>
 #include <SDL.h>
@@ -10,14 +10,14 @@ typedef struct
     int x;
     int y;
     int activo;
-}tEscudos;
+}tEscudo;
 
 typedef struct
 {
     int x;
     int y;
     int activo;
-} tParteEscudos;
+}tParteEscudo;
 
 #define CANT_ESCUDOS 4
 #define ESCUDOS_ANCHO 35
@@ -32,15 +32,16 @@ typedef struct
 #define PARTES_POR_ESCUDO (COLUMNAS_ESCUDO * FILAS_ESCUDO)
 #define PARTES_ESCUDOS_TOTAL (CANT_ESCUDOS * PARTES_POR_ESCUDO)
 
-int mapa_escudos_iniciar(void);
-int mapa_escudo_impactado(int x, int y);
-void mapa_destruir_parte_escudo(unsigned indiceParte);
-void mapa_actualizar_estado_escudo(unsigned indiceEscudo);
-void mapa_escudos_dibujar(SDL_Renderer *render);
-void mapa_escudos_destruir(void);
+/* Sprites */
+bool escudo_cargar(SDL_Renderer *render);
+void escudo_liberar(void);
 
-/* Sprites del mapa (hoy: solo el escudo) */
-bool mapa_sprites_cargar(SDL_Renderer *render);
-void mapa_sprites_liberar(void);
+/* Formacion */
+int  escudo_iniciar(void);
+void escudo_dibujar(SDL_Renderer *render);
+void escudo_destruir(void);
 
-#endif // MAPA_H_INCLUDED
+/* Colision con una bala (devuelve 1 si le pego a alguna parte) */
+int  escudo_impactado(int x, int y);
+
+#endif // ESCUDO_H_INCLUDED

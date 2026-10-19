@@ -6,7 +6,7 @@
 #include "jugador.h"
 #include "enemigo.h"
 #include "disparo.h"
-#include "mapa.h"
+#include "escudo.h"
 #include "bala.h"
 #include "sprites.h"
 #include "audio.h"
@@ -146,7 +146,7 @@ static void colisiones_bala_escudo(Vector *vBalas)
     {
         vectorGetByPos(vBalas, i, &bala);
 
-        if(mapa_escudo_impactado(bala.x, bala.y))
+        if(escudo_impactado(bala.x, bala.y))
             vectorRemoveByPos(vBalas, i);   /* no avanzo i: se corre la siguiente */
         else
             i++;
@@ -276,8 +276,9 @@ static void colisiones_enemigos_jugador(void)
     }
 }
 
-/* Deteccion de colisiones (paso del ciclo del juego).
-   El ORDEN importa: una bala puede morir una sola vez. */
+/** Deteccion de colisiones (paso del ciclo del juego)**/
+
+//El orden aca importa: una bala puede morir una sola vez
 static void game_colisiones(void)
 {
     colisiones_bala_escudo(&vBalasJugador);          /* bala jugador vs escudo */
@@ -296,17 +297,6 @@ static void game_actualizar_disparos(void)
     vectorMap(&vBalasEnemigo, bala_mover_enemigo, NULL);
     vectorFilter(&vBalasEnemigo, bala_en_pantalla, NULL);
 }
-
-
-/*
-//Mapa
-static void gameMapa(){}
-
-//Recursos
-static void gameEscudos(){}
-static void gameScore(){}
-static void gamePause(){}
-*/
 
 /*** FUNCIONES PUBLICAS ***/
 
@@ -355,7 +345,7 @@ bool gameCrear(SDL_Renderer *render)
     }
     balasEnemigoCreadas = true;
 
-    if(!enemigo_cargar(render) || !mapa_sprites_cargar(render))
+    if(!enemigo_cargar(render) || !escudo_cargar(render))
     {
         gameDestruir();
         return false;
@@ -368,7 +358,7 @@ bool gameCrear(SDL_Renderer *render)
     }
     enemigosCreados = true;
 
-    if(!mapa_escudos_iniciar())
+    if(!escudo_iniciar())
     {
         gameDestruir();
         return false;
@@ -465,7 +455,7 @@ void gameDibujar(SDL_Renderer *render)
     enemigo_dibujar(&vEnemigos, render);
 
     /* Dibujar escudos */
-    mapa_escudos_dibujar(render);
+    escudo_dibujar(render);
 
     /* Dibujar disparo del jugador */
     vectorMap(&vBalasJugador, bala_dibujar, render);
@@ -501,9 +491,9 @@ void gameDestruir(void)
     //spriteLiberar(&sprEnemigos);
     //spriteLiberar(&sprEscudos);
 
-    mapa_escudos_destruir();
+    escudo_destruir();
     enemigo_liberar();
-    mapa_sprites_liberar();
+    escudo_liberar();
 
     sonidoLiberar(sndDisparoJugador);
     sonidoLiberar(sndDisparoEnemigo);
