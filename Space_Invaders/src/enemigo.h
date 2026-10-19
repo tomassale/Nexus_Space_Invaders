@@ -39,6 +39,7 @@ int  enemigo_iniciar(Vector *vEnemigos);
 
 /* Formacion: mover y dibujar todos juntos */
 void enemigo_mover(Vector *vEnemigos);
+float enemigo_intervalo_movimiento(Vector *vEnemigos); /* segundos entre pasos */
 void enemigo_dibujar(Vector *vEnemigos, SDL_Renderer *render);
 int  enemigo_hay_activos(Vector *vEnemigos);
 
