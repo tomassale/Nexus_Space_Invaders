@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <SDL.h>
+#include "vector.h"
 
 /* Escudos: cada escudo esta armado con partes chicas que se destruyen de a una */
 typedef struct
@@ -32,19 +33,24 @@ typedef struct
 #define PARTES_POR_ESCUDO (COLUMNAS_ESCUDO * FILAS_ESCUDO)
 #define PARTES_ESCUDOS_TOTAL (CANT_ESCUDOS * PARTES_POR_ESCUDO)
 
+/* La coleccion de escudos y la de sus partes las declara y las guarda el juego.
+   El modulo solo sabe como crearlas y como trabajar con ellas. */
+
 /* Sprites */
 bool escudo_cargar(SDL_Renderer *render);
 void escudo_liberar(void);
 
-/* Formacion */
-int  escudo_iniciar(void);
-void escudo_dibujar(SDL_Renderer *render);
-void escudo_destruir(void);
+/* Formacion: crea las dos colecciones y les carga los escudos */
+int  escudo_iniciar(Vector *vEscudos, Vector *vEscudosPartes);
+void escudo_dibujar(Vector *vEscudos, Vector *vEscudosPartes, SDL_Renderer *render);
+void escudo_destruir(Vector *vEscudos, Vector *vEscudosPartes);
 
 /* Danio: el juego decide quien golpea y el escudo resuelve que partes se rompen.
    - Una bala rompe UNA parte (la primera que toca).
    - Un enemigo (rectangulo mas grande) rompe TODAS las que toca. */
-int  escudo_impactado(int x, int y, int ancho, int alto);
-void escudo_romper_rect(int x, int y, int ancho, int alto);
+int  escudo_impactado(Vector *vEscudos, Vector *vEscudosPartes,
+                      int x, int y, int ancho, int alto);
+void escudo_romper_rect(Vector *vEscudos, Vector *vEscudosPartes,
+                        int x, int y, int ancho, int alto);
 
 #endif // ESCUDO_H_INCLUDED

@@ -12,30 +12,24 @@
 #define ESCUDOS_SEPARACION_X 50
 
 /* =========================================================
- * Estado del modulo: los escudos y sus partes viven aca adentro.
+ * Sprites
  * ========================================================= */
-static Vector vEscudos;
-static Vector vEscudosPartes;
-static int escudosCreados = 0;
-
 static tSprite sprEscudo = {0};
 
-int escudo_iniciar(void)
+int escudo_iniciar(Vector *vEscudos, Vector *vEscudosPartes)
 {
     int i, fila, columna;
     tEscudo escudo;
     tParteEscudo parte;
 
-    if(!vectorCrear(&vEscudos, CANT_ESCUDOS, sizeof(tEscudo)))
+    if(!vectorCrear(vEscudos, CANT_ESCUDOS, sizeof(tEscudo)))
         return 0;
 
-    if(!vectorCrear(&vEscudosPartes, PARTES_ESCUDOS_TOTAL, sizeof(tParteEscudo)))
+    if(!vectorCrear(vEscudosPartes, PARTES_ESCUDOS_TOTAL, sizeof(tParteEscudo)))
     {
-        vectorDestruir(&vEscudos);
+        vectorDestruir(vEscudos);
         return 0;
     }
-
-    escudosCreados = 1;
 
     for(i = 0; i < CANT_ESCUDOS; i++)
     {
@@ -43,9 +37,9 @@ int escudo_iniciar(void)
         escudo.y = ESCUDOS_INICIO_Y;
         escudo.activo = 1;
 
-        if(vectorInsertarAlFinal(&vEscudos, &escudo) != TODO_OK)
+        if(vectorInsertarAlFinal(vEscudos, &escudo) != TODO_OK)
         {
-            escudo_destruir();
+            escudo_destruir(vEscudos, vEscudosPartes);
             return 0;
         }
 
@@ -58,9 +52,9 @@ int escudo_iniciar(void)
                 parte.y = escudo.y + fila * PARTE_ESCUDO_ALTO;
                 parte.activo = 1;
 
-                if(vectorInsertarAlFinal(&vEscudosPartes, &parte) != TODO_OK)
+                if(vectorInsertarAlFinal(vEscudosPartes, &parte) != TODO_OK)
                 {
-                    escudo_destruir();
+                    escudo_destruir(vEscudos, vEscudosPartes);
                     return 0;
                 }
             }
@@ -71,20 +65,21 @@ int escudo_iniciar(void)
 }
 
 /* Apaga UNA parte del escudo */
-static void destruirParteEscudo(unsigned indiceParte)
+static void destruirParteEscudo(Vector *vEscudosPartes, unsigned indiceParte)
 {
     tParteEscudo parte;
 
-    if(vectorGetByPos(&vEscudosPartes, indiceParte, &parte))
+    if(vectorGetByPos(vEscudosPartes, indiceParte, &parte))
     {
         parte.activo = 0;
 
-        vectorUpdateByPos(&vEscudosPartes, indiceParte, &parte);
+        vectorUpdateByPos(vEscudosPartes, indiceParte, &parte);
     }
 }
 
 /* Apaga el escudo entero recien cuando no le queda ninguna parte viva */
-static void actualizarEstadoEscudo(unsigned indiceEscudo)
+static void actualizarEstadoEscudo(Vector *vEscudos, Vector *vEscudosPartes,
+                                   unsigned indiceEscudo)
 {
     unsigned i = indiceEscudo * PARTES_POR_ESCUDO;
     unsigned fin = i + PARTES_POR_ESCUDO;
@@ -94,7 +89,7 @@ static void actualizarEstadoEscudo(unsigned indiceEscudo)
 
     while(i < fin && !hayPartesActivas)
     {
-        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+        if(vectorGetByPos(vEscudosPartes, i, &parte) &&
            parte.activo)
             hayPartesActivas = 1;
 
@@ -102,24 +97,25 @@ static void actualizarEstadoEscudo(unsigned indiceEscudo)
     }
 
     if(!hayPartesActivas &&
-       vectorGetByPos(&vEscudos, indiceEscudo, &escudo))
+       vectorGetByPos(vEscudos, indiceEscudo, &escudo))
     {
         escudo.activo = 0;
 
-        vectorUpdateByPos(&vEscudos, indiceEscudo, &escudo);
+        vectorUpdateByPos(vEscudos, indiceEscudo, &escudo);
     }
 }
 
 /* Indice de la primera parte viva que choca con el rectangulo, o -1 */
-static int buscarParteGolpeada(int x, int y, int ancho, int alto)
+static int buscarParteGolpeada(Vector *vEscudosPartes,
+                               int x, int y, int ancho, int alto)
 {
     unsigned i;
-    unsigned cantidad = (unsigned)VectorCE(&vEscudosPartes);
+    unsigned cantidad = (unsigned)VectorCE(vEscudosPartes);
     tParteEscudo parte;
 
     for(i = 0; i < cantidad; i++)
     {
-        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+        if(vectorGetByPos(vEscudosPartes, i, &parte) &&
            parte.activo &&
            hay_choque(x, y, ancho, alto,
                       parte.x, parte.y, PARTE_ESCUDO_ANCHO, PARTE_ESCUDO_ALTO))
@@ -130,46 +126,50 @@ static int buscarParteGolpeada(int x, int y, int ancho, int alto)
 }
 
 /* Una bala: rompe solo la primera parte que toca */
-int escudo_impactado(int x, int y, int ancho, int alto)
+int escudo_impactado(Vector *vEscudos, Vector *vEscudosPartes,
+                     int x, int y, int ancho, int alto)
 {
-    int indice = buscarParteGolpeada(x, y, ancho, alto);
+    int indice = buscarParteGolpeada(vEscudosPartes, x, y, ancho, alto);
 
     if(indice < 0)
         return 0;
 
-    destruirParteEscudo((unsigned)indice);
+    destruirParteEscudo(vEscudosPartes, (unsigned)indice);
 
     /* A que escudo pertenece la parte golpeada */
-    actualizarEstadoEscudo((unsigned)indice / PARTES_POR_ESCUDO);
+    actualizarEstadoEscudo(vEscudos, vEscudosPartes,
+                           (unsigned)indice / PARTES_POR_ESCUDO);
 
     return 1;
 }
 
 /* Un enemigo: rompe todas las partes que toca de una sola vez */
-void escudo_romper_rect(int x, int y, int ancho, int alto)
+void escudo_romper_rect(Vector *vEscudos, Vector *vEscudosPartes,
+                        int x, int y, int ancho, int alto)
 {
     unsigned i;
-    unsigned cantidad = (unsigned)VectorCE(&vEscudosPartes);
+    unsigned cantidad = (unsigned)VectorCE(vEscudosPartes);
     tParteEscudo parte;
 
     for(i = 0; i < cantidad; i++)
     {
-        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+        if(vectorGetByPos(vEscudosPartes, i, &parte) &&
            parte.activo &&
            hay_choque(x, y, ancho, alto,
                       parte.x, parte.y, PARTE_ESCUDO_ANCHO, PARTE_ESCUDO_ALTO))
         {
-            destruirParteEscudo(i);
-            actualizarEstadoEscudo(i / PARTES_POR_ESCUDO);
+            destruirParteEscudo(vEscudosPartes, i);
+            actualizarEstadoEscudo(vEscudos, vEscudosPartes,
+                                   i / PARTES_POR_ESCUDO);
         }
     }
 }
 
 /* Dibuja solo las partes vivas, recortando cada una del sprite completo */
-void escudo_dibujar(SDL_Renderer *render)
+void escudo_dibujar(Vector *vEscudos, Vector *vEscudosPartes, SDL_Renderer *render)
 {
     unsigned i = 0;
-    unsigned cantidad = (unsigned)VectorCE(&vEscudosPartes);
+    unsigned cantidad = (unsigned)VectorCE(vEscudosPartes);
     unsigned indiceEscudo;
     unsigned indiceLocal;
     unsigned fila;
@@ -183,13 +183,13 @@ void escudo_dibujar(SDL_Renderer *render)
 
     while(i < cantidad)
     {
-        if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
+        if(vectorGetByPos(vEscudosPartes, i, &parte) &&
            parte.activo)
         {
             indiceEscudo = i / PARTES_POR_ESCUDO;
             indiceLocal = i % PARTES_POR_ESCUDO;
 
-            if(vectorGetByPos(&vEscudos, indiceEscudo, &escudo) &&
+            if(vectorGetByPos(vEscudos, indiceEscudo, &escudo) &&
                escudo.activo)
             {
                 fila = indiceLocal / COLUMNAS_ESCUDO;
@@ -216,19 +216,12 @@ void escudo_dibujar(SDL_Renderer *render)
     }
 }
 
-void escudo_destruir(void)
+void escudo_destruir(Vector *vEscudos, Vector *vEscudosPartes)
 {
-    if(escudosCreados)
-    {
-        vectorDestruir(&vEscudos);
-        vectorDestruir(&vEscudosPartes);
-        escudosCreados = 0;
-    }
+    vectorDestruir(vEscudos);
+    vectorDestruir(vEscudosPartes);
 }
 
-/* =========================================================
- * Sprites
- * ========================================================= */
 bool escudo_cargar(SDL_Renderer *render)
 {
     if(!spriteCargar(&sprEscudo, render,

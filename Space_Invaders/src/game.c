@@ -41,9 +41,12 @@ static tJugador jugador;
 static Vector vBalasJugador;
 static Vector vBalasEnemigo;
 static Vector vEnemigos;
+static Vector vEscudos;
+static Vector vEscudosPartes;
 static bool balasJugadorCreadas = false;
 static bool balasEnemigoCreadas = false;
 static bool enemigosCreados = false;
+static bool escudosCreados = false;
 static float tiempoDisparo = 0;
 
 
@@ -133,7 +136,8 @@ static void colisiones_bala_escudo(Vector *vBalas)
     {
         vectorGetByPos(vBalas, i, &bala);
 
-        if(escudo_impactado(bala.x, bala.y, BALA_ANCHO, BALA_ALTO))
+        if(escudo_impactado(&vEscudos, &vEscudosPartes,
+                            bala.x, bala.y, BALA_ANCHO, BALA_ALTO))
             vectorRemoveByPos(vBalas, i);   /* no avanzo i: se corre la siguiente */
         else
             i++;
@@ -274,7 +278,8 @@ static void game_enemigos_rompen_escudos(void)
     for(i = 0; i < cantidad; i++)
     {
         if(vectorGetByPos(&vEnemigos, i, &enemigo) && enemigo.activo)
-            escudo_romper_rect(enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO);
+            escudo_romper_rect(&vEscudos, &vEscudosPartes,
+                               enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO);
     }
 }
 
@@ -363,8 +368,8 @@ static void game_iniciar_ronda(int numero)
 
     vectorDestruir(&vEnemigos);
     enemigo_iniciar(&vEnemigos);
-    escudo_destruir();
-    escudo_iniciar();
+    escudo_destruir(&vEscudos, &vEscudosPartes);
+    escudo_iniciar(&vEscudos, &vEscudosPartes);
 }
 
 /*** FUNCIONES PUBLICAS ***/
@@ -439,11 +444,12 @@ bool gameCrear(SDL_Renderer *render)
     }
     enemigosCreados = true;
 
-    if(!escudo_iniciar())
+    if(!escudo_iniciar(&vEscudos, &vEscudosPartes))
     {
         gameDestruir();
         return false;
     }
+    escudosCreados = true;
 
     /* La portada y la musica son opcionales: si faltan, el juego arranca igual */
     spriteCargar(&sprMenu, render, RUTA_IMAGEN_MENU, 1, 0);
@@ -593,7 +599,7 @@ void gameDibujar(SDL_Renderer *render)
     enemigo_dibujar(&vEnemigos, render);
 
     /* Dibujar escudos */
-    escudo_dibujar(render);
+    escudo_dibujar(&vEscudos, &vEscudosPartes, render);
 
     /* Dibujar disparo del jugador */
     vectorMap(&vBalasJugador, bala_dibujar, render);
@@ -648,7 +654,11 @@ void gameDestruir(void)
     spriteLiberar(&sprMenu);
     musicaDetener();
 
-    escudo_destruir();
+    if(escudosCreados)
+    {
+        escudo_destruir(&vEscudos, &vEscudosPartes);
+        escudosCreados = false;
+    }
     enemigo_liberar();
     escudo_liberar();
 
