@@ -185,6 +185,8 @@ static int dibujarEnemigo(void *elem, void *datos)
     /* Los que ya bajaron demasiado se avisan en amarillo */
     if(enemigo->y >= ALTURA_AMARILLA)
         SDL_SetTextureColorMod(sprite->textura, 255, 255, 0);
+    if(enemigo->y >= ALTURA_ROJA)
+        SDL_SetTextureColorMod(sprite->textura, 255, 0, 0);
 
     spriteDibujar(render, sprite,
                   enemigo->x, enemigo->y,

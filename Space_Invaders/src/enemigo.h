@@ -18,6 +18,9 @@
 #define ENEMIGO_PULPO_TURQUESA      3
 #define ENEMIGO_PULPO_MORADO        4
 
+#define ESCUDOS_INICIO_Y 170
+#define ALTURA_ROJA (ESCUDOS_INICIO_Y - ENEMIGO_ALTO)
+
 // Estructura de UN enemigo de la formacion
 typedef struct
 {

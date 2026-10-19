@@ -547,6 +547,9 @@ void gameActualizar(float delta)
     if(tiempoMovimientoEnemigos >= intervaloMovimiento)
     {
         enemigo_mover(&vEnemigos);
+
+        mapa_enemigos_rompen_escudos(&vEnemigos);
+
         sonidoReproducir(sndNaveBajando[pasoActual]);
         pasoActual = (pasoActual + 1) % CANT_PASOS;
         tiempoMovimientoEnemigos -= intervaloMovimiento;
