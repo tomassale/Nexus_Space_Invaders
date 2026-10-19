@@ -18,6 +18,9 @@
 #define VELOCIDAD_ENEMIGOS 2
 #define DESCENSO_ENEMIGOS 10
 #define ALTURA_AMARILLA 150
+#define TOTAL_ENEMIGOS (FILAS_ENEMIGOS * COLUMNAS_ENEMIGOS)
+#define INTERVALO_MOVIMIENTO_MAX 0.5f
+#define INTERVALO_MOVIMIENTO_MIN 0.05f
 
 #define DURACION_ELIMINADO 250
 
@@ -108,7 +111,7 @@ int enemigo_iniciar(Vector *vEnemigos)
 
     /* Capacidad inicial = la formacion entera */
     if(!vectorCrear(vEnemigos,
-                    FILAS_ENEMIGOS * COLUMNAS_ENEMIGOS,
+                    TOTAL_ENEMIGOS,
                     sizeof(tEnemigo)))
         return 0;
 
@@ -262,6 +265,15 @@ void enemigo_mover(Vector *vEnemigos)
 
     /* Pasada 2: mover toda la formacion junta */
     vectorMap(vEnemigos, moverEnemigo, &llegoAlBorde);
+}
+
+/* Cuantos menos enemigos quedan, menos espera entre pasos: la oleada acelera. */
+float enemigo_intervalo_movimiento(Vector *vEnemigos)
+{
+    float proporcionVivos = (float)VectorCE(vEnemigos) / TOTAL_ENEMIGOS;
+
+    return INTERVALO_MOVIMIENTO_MIN +
+           (INTERVALO_MOVIMIENTO_MAX - INTERVALO_MOVIMIENTO_MIN) * proporcionVivos;
 }
 
 int enemigo_hay_activos(Vector *vEnemigos)

@@ -371,8 +371,8 @@ static void game_iniciar_ronda(int numero)
     vectorDestruir(&vBalasEnemigo);
     vectorCrear(&vBalasEnemigo, 8, sizeof(Bala));
 
-    mapa_enemigos_destruir();
-    mapa_enemigos_iniciar();
+    vectorDestruir(&vEnemigos);
+    enemigo_iniciar(&vEnemigos);
     mapa_escudos_destruir();
     mapa_escudos_iniciar();
 }
@@ -542,11 +542,11 @@ void gameActualizar(float delta)
     game_cooldown_enemigo(delta);
 
     tiempoMovimientoEnemigos += delta;
-    intervaloMovimiento = mapa_enemigos_intervalo_movimiento();
+    intervaloMovimiento = enemigo_intervalo_movimiento(&vEnemigos);
 
     if(tiempoMovimientoEnemigos >= intervaloMovimiento)
     {
-        mapa_enemigos_mover();
+        enemigo_mover(&vEnemigos);
         sonidoReproducir(sndNaveBajando[pasoActual]);
         pasoActual = (pasoActual + 1) % CANT_PASOS;
         tiempoMovimientoEnemigos -= intervaloMovimiento;
