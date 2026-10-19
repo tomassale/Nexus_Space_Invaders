@@ -32,6 +32,20 @@ typedef struct
 #define PARTES_POR_ESCUDO (COLUMNAS_ESCUDO * FILAS_ESCUDO)
 #define PARTES_ESCUDOS_TOTAL (CANT_ESCUDOS * PARTES_POR_ESCUDO)
 
+#define ENEMIGO_CALAMAR_VERDE       0
+#define ENEMIGO_CANGREJO_VERDE      1
+#define ENEMIGO_CANGREJO_TURQUESA   2
+#define ENEMIGO_PULPO_TURQUESA      3
+#define ENEMIGO_PULPO_MORADO        4
+
+
+int mapa_enemigos_iniciar(void);
+void mapa_enemigos_destruir(void);
+void mapa_enemigos_mover(void);
+float mapa_enemigos_intervalo_movimiento(void);
+int mapa_enemigo_impactado(int x, int y, int *tipoEliminado);
+int mapa_enemigos_obtener(tEnemigos *enemigo);
+int mapa_enemigo_toca_jugador(int x, int y);
 int mapa_escudos_iniciar(void);
 int mapa_escudo_impactado(int x, int y);
 void mapa_destruir_parte_escudo(unsigned indiceParte);
