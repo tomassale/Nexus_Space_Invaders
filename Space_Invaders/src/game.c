@@ -7,6 +7,7 @@
 #include "enemigo.h"
 #include "escudo.h"
 #include "bala.h"
+#include "recursos.h"
 #include "sprites.h"
 #include "audio.h"
 #include "fonts.h"
@@ -16,7 +17,6 @@
 #define CANT_PASOS 4
 #define RONDAS_PARA_GANAR 2
 
-#define RUTA_IMAGEN_MENU "assets/images/menu.png"
 #define RUTA_MUSICA_MENU "assets/audio/spaceinvaders1.mpeg"
 
 #define ALTO_CARACTER 8
@@ -49,10 +49,6 @@ static bool enemigosCreados = false;
 static bool escudosCreados = false;
 static float tiempoDisparo = 0;
 
-
-static tSprite sprFondo = {0};
-static tSprite sprJugador = {0};
-static tSprite sprMenu = {0};
 
 static tSonido *sndDisparoJugador;
 static tSonido *sndDisparoEnemigo;
@@ -316,15 +312,16 @@ static void game_dibujar_texto_centrado(SDL_Renderer *render, const char *texto,
 static void game_dibujar_menu(SDL_Renderer *render)
 {
     SDL_Color blanco = {255, 255, 255, 255};
+    const tSprite *menu = recursos_menu();
 
     /* Sin imagen de portada, se usa el fondo del juego con el titulo en texto */
-    if(sprMenu.textura)
+    if(menu->textura)
     {
-        spriteDibujar(render, &sprMenu, 0, 0, VENTANA_X, VENTANA_Y);
+        spriteDibujar(render, menu, 0, 0, VENTANA_X, VENTANA_Y);
     }
     else
     {
-        spriteDibujar(render, &sprFondo, 0, 0, VENTANA_X, VENTANA_Y);
+        spriteDibujar(render, recursos_fondo(), 0, 0, VENTANA_X, VENTANA_Y);
         game_dibujar_texto_centrado(render, "SPACE INVADERS", VENTANA_Y / 3, blanco);
     }
 
@@ -392,8 +389,7 @@ bool gameCrear(SDL_Renderer *render)
         sndNaveBajando[i] = sonidoCargar(ruta);
     }
 
-    if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
-            !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
+    if(!recursos_cargar(render))
     {
         gameDestruir();
         return false;
@@ -431,12 +427,6 @@ bool gameCrear(SDL_Renderer *render)
     }
     balasEnemigoCreadas = true;
 
-    if(!enemigo_cargar(render) || !escudo_cargar(render))
-    {
-        gameDestruir();
-        return false;
-    }
-
     if(!enemigo_iniciar(&vEnemigos))
     {
         gameDestruir();
@@ -451,8 +441,7 @@ bool gameCrear(SDL_Renderer *render)
     }
     escudosCreados = true;
 
-    /* La portada y la musica son opcionales: si faltan, el juego arranca igual */
-    spriteCargar(&sprMenu, render, RUTA_IMAGEN_MENU, 1, 0);
+    /* La musica es opcional: si falta, el juego arranca igual */
     musicaReproducir(RUTA_MUSICA_MENU, true);
 
     enMenu = true;
@@ -575,7 +564,7 @@ void gameDibujar(SDL_Renderer *render)
     }
 
     /*Dibujar fondo*/
-    spriteDibujar(render, &sprFondo, 0, 0, VENTANA_X, VENTANA_Y);
+    spriteDibujar(render, recursos_fondo(), 0, 0, VENTANA_X, VENTANA_Y);
 
     /*Dibujar puntaje*/
     SDL_Color blanco = {255, 255, 255, 255};
@@ -588,7 +577,7 @@ void gameDibujar(SDL_Renderer *render)
     fuenteDibujar(render, fntPuntaje, buf, 8, 17, blanco);
 
     /* Dibujar jugador */
-    spriteDibujar(render, &sprJugador, jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
+    spriteDibujar(render, recursos_jugador(), jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
 
     rect.x = jugador.x;
     rect.y = jugador.y;
@@ -649,9 +638,7 @@ void gameDestruir(void)
 
     int i;
 
-    spriteLiberar(&sprFondo);
-    spriteLiberar(&sprJugador);
-    spriteLiberar(&sprMenu);
+    recursos_liberar();
     musicaDetener();
 
     if(escudosCreados)
@@ -659,8 +646,6 @@ void gameDestruir(void)
         escudo_destruir(&vEscudos, &vEscudosPartes);
         escudosCreados = false;
     }
-    enemigo_liberar();
-    escudo_liberar();
 
     sonidoLiberar(sndDisparoJugador);
     sonidoLiberar(sndDisparoEnemigo);

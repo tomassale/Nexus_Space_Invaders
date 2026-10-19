@@ -36,10 +36,6 @@ typedef struct
 /* La coleccion de escudos y la de sus partes las declara y las guarda el juego.
    El modulo solo sabe como crearlas y como trabajar con ellas. */
 
-/* Sprites */
-bool escudo_cargar(SDL_Renderer *render);
-void escudo_liberar(void);
-
 /* Formacion: crea las dos colecciones y les carga los escudos */
 int  escudo_iniciar(Vector *vEscudos, Vector *vEscudosPartes);
 void escudo_dibujar(Vector *vEscudos, Vector *vEscudosPartes, SDL_Renderer *render);

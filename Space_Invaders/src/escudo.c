@@ -3,18 +3,13 @@
 
 #include "escudo.h"
 #include "colision.h"
-#include "sprites.h"
+#include "recursos.h"
 #include "vector.h"
 
 /* Posicion y separacion de los escudos en pantalla */
 #define ESCUDOS_INICIO_X 40
 #define ESCUDOS_INICIO_Y 170
 #define ESCUDOS_SEPARACION_X 50
-
-/* =========================================================
- * Sprites
- * ========================================================= */
-static tSprite sprEscudo = {0};
 
 int escudo_iniciar(Vector *vEscudos, Vector *vEscudosPartes)
 {
@@ -206,7 +201,7 @@ void escudo_dibujar(Vector *vEscudos, Vector *vEscudosPartes, SDL_Renderer *rend
                 destino.h = PARTE_ESCUDO_ALTO;
 
                 SDL_RenderCopy(render,
-                               sprEscudo.textura,
+                               recursos_escudo()->textura,
                                &origen,
                                &destino);
             }
@@ -220,18 +215,4 @@ void escudo_destruir(Vector *vEscudos, Vector *vEscudosPartes)
 {
     vectorDestruir(vEscudos);
     vectorDestruir(vEscudosPartes);
-}
-
-bool escudo_cargar(SDL_Renderer *render)
-{
-    if(!spriteCargar(&sprEscudo, render,
-                     "assets/images/escudo.png", 1, 0))
-        return false;
-
-    return true;
-}
-
-void escudo_liberar(void)
-{
-    spriteLiberar(&sprEscudo);
 }

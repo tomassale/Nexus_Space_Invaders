@@ -31,10 +31,6 @@ typedef struct
 /* La coleccion de enemigos (un Vector) la declara y la guarda el juego.
    El modulo solo sabe como crearla y como trabajar con ella. */
 
-/* Sprites */
-bool enemigo_cargar(SDL_Renderer *render);
-void enemigo_liberar(void);
-
 /* Formacion: crea la coleccion y le carga los enemigos */
 int  enemigo_iniciar(Vector *vEnemigos);
 
