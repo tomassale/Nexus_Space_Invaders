@@ -2,18 +2,9 @@
 #define MAPA_H_INCLUDED
 
 #include <stdbool.h>
+#include <SDL.h>
 
-typedef struct
-{
-    int x;
-    int y;
-    int activo;
-    int tipo;
-}tEnemigos;
-
-#define ENEMIGO_ANCHO 12
-#define ENEMIGO_ALTO 8
-
+/* Escudos: cada escudo esta armado con partes chicas que se destruyen de a una */
 typedef struct
 {
     int x;
@@ -61,8 +52,9 @@ void mapa_destruir_parte_escudo(unsigned indiceParte);
 void mapa_actualizar_estado_escudo(unsigned indiceEscudo);
 void mapa_escudos_dibujar(SDL_Renderer *render);
 void mapa_escudos_destruir(void);
-void mapa_enemigos_dibujar(SDL_Renderer *render);
+
+/* Sprites del mapa (hoy: solo el escudo) */
 bool mapa_sprites_cargar(SDL_Renderer *render);
-int mapa_enemigos_hay_activos(void);
 void mapa_sprites_liberar(void);
+
 #endif // MAPA_H_INCLUDED

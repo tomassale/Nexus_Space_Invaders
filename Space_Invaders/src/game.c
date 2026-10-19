@@ -4,6 +4,7 @@
 
 #include "game.h"
 #include "jugador.h"
+#include "enemigo.h"
 #include "disparo.h"
 #include "mapa.h"
 #include "bala.h"
@@ -44,11 +45,14 @@ static int puntaje;
 static int ronda;
 
 
+/* Colecciones: el juego es dueno de los datos; los modulos solo saben usarlos */
 static tJugador jugador;
 static Vector vBalasJugador;
 static Vector vBalasEnemigo;
+static Vector vEnemigos;
 static bool balasJugadorCreadas = false;
 static bool balasEnemigoCreadas = false;
+static bool enemigosCreados = false;
 static float tiempoDisparo = 0;
 
 
@@ -99,14 +103,14 @@ static void game_disparar_jugador(void)
 
 static void game_disparar_enemigo(void)
 {
-    tEnemigos enemigo;
+    tEnemigo enemigo;
     Bala bala;
     int x, y;
 
     if(VectorCE(&vBalasEnemigo) != 0)
         return;
 
-    if(!mapa_enemigos_obtener(&enemigo))
+    if(!enemigo_obtener(&vEnemigos, &enemigo))
         return;
 
     x = enemigo.x + (ENEMIGO_ANCHO / 2) - (BALA_ANCHO / 2);
@@ -130,114 +134,166 @@ static void game_cooldown_enemigo(float delta)
     }
 }
 
-static int hayColisionBalas(int x1, int y1, int x2, int y2)
+/* Test unico: se superponen dos rectangulos? (x, y, ancho, alto) */
+static bool game_hay_choque(int x1, int y1, int ancho1, int alto1,
+                            int x2, int y2, int ancho2, int alto2)
 {
-    return x1 < x2 + BALA_ANCHO &&
-    x1 + BALA_ANCHO > x2 &&
-    y1 < y2 + BALA_ALTO &&
-    y1 + BALA_ALTO > y2;
+    bool separadosEnX = x1 >= x2 + ancho2 || x1 + ancho1 <= x2;
+    bool separadosEnY = y1 >= y2 + alto2 || y1 + alto1 <= y2;
+
+    return !separadosEnX && !separadosEnY;
 }
 
-static int hayColisionBalaAJugador(int x1, int y1, int x2, int y2)
-{
-    return x1 < x2 + ANCHO_JUGADOR &&
-           x1 + BALA_ANCHO > x2 &&
-           y1 < y2 + ALTO_JUGADOR &&
-           y1 + BALA_ALTO > y2;
-}
-
-static void game_colisiones(void)
+/* Bala (de cualquiera de las dos colecciones) contra un escudo */
+static void colisiones_bala_escudo(Vector *vBalas)
 {
     unsigned i = 0;
-    unsigned j;
-    Bala balaJ, balaE;
-    int balaJEliminada, tipoEliminado;
+    Bala bala;
 
-    /* Colisiones entre balas del jugador, balas enemigas,
-       escudos y enemigos */
+    while(i < (unsigned)VectorCE(vBalas))
+    {
+        vectorGetByPos(vBalas, i, &bala);
+
+        if(mapa_escudo_impactado(bala.x, bala.y))
+            vectorRemoveByPos(vBalas, i);   /* no avanzo i: se corre la siguiente */
+        else
+            i++;
+    }
+}
+
+/* Bala del jugador contra bala enemiga: se destruyen las dos */
+static void colisiones_balas_jugador_bala_enemiga(void)
+{
+    unsigned i = 0, j;
+    Bala balaJ, balaE;
+    int eliminada;
+
     while(i < (unsigned)VectorCE(&vBalasJugador))
     {
         vectorGetByPos(&vBalasJugador, i, &balaJ);
-        balaJEliminada = 0;
+        eliminada = 0;
 
-        /* Colision de la bala del jugador contra un escudo */
-        if(mapa_escudo_impactado(balaJ.x, balaJ.y))
-        {
-            vectorRemoveByPos(&vBalasJugador, i);
-            balaJEliminada = 1;
-        }
-
-        /* Colision entre balas del jugador y enemigas */
-        j = 0;
-
-        while(j < (unsigned)VectorCE(&vBalasEnemigo) &&
-              !balaJEliminada)
+        for(j = 0; j < (unsigned)VectorCE(&vBalasEnemigo) && !eliminada; j++)
         {
             vectorGetByPos(&vBalasEnemigo, j, &balaE);
 
-            if(hayColisionBalas(balaJ.x, balaJ.y,
-                                balaE.x, balaE.y))
+            if(game_hay_choque(balaJ.x, balaJ.y, BALA_ANCHO, BALA_ALTO,
+                               balaE.x, balaE.y, BALA_ANCHO, BALA_ALTO))
             {
                 vectorRemoveByPos(&vBalasJugador, i);
                 vectorRemoveByPos(&vBalasEnemigo, j);
-                balaJEliminada = 1;
-            }
-            else
-                j++;
-        }
-
-        /* Colision de la bala del jugador contra un enemigo */
-        if(!balaJEliminada)
-        {
-            if(mapa_enemigo_impactado(balaJ.x, balaJ.y,
-                                      &tipoEliminado))
-            {
-                vectorRemoveByPos(&vBalasJugador, i);
-                balaJEliminada = 1;
-
-                puntaje += puntosEnemigo[tipoEliminado];
-
-                if(puntaje >= proximaVidaExtra)
-                {
-                    jugador.vidas++;
-                    proximaVidaExtra += PUNTAJE_VIDA_EXTRA;
-                }
+                eliminada = 1;
             }
         }
 
-        if(!balaJEliminada)
+        if(!eliminada)
             i++;
     }
+}
 
-    /* Colisiones entre balas enemigas, escudos y jugador */
-    i = 0;
+/* Bala del jugador contra un enemigo: se borran los dos y suma puntaje */
+static void colisiones_balas_jugador_enemigos(void)
+{
+    unsigned i = 0, j;
+    Bala bala;
+    tEnemigo enemigo;
+    int golpeado;
 
-    while(i < (unsigned)VectorCE(&vBalasEnemigo))
+    while(i < (unsigned)VectorCE(&vBalasJugador))
     {
-        vectorGetByPos(&vBalasEnemigo, i, &balaE);
+        vectorGetByPos(&vBalasJugador, i, &bala);
 
-        /* Colision de la bala enemiga contra un escudo */
-        if(mapa_escudo_impactado(balaE.x, balaE.y))
+        /* Busco el primer enemigo que choque con esta bala */
+        golpeado = -1;
+
+        for(j = 0; j < (unsigned)VectorCE(&vEnemigos); j++)
         {
-            vectorRemoveByPos(&vBalasEnemigo, i);
+            vectorGetByPos(&vEnemigos, j, &enemigo);
+
+            if(game_hay_choque(bala.x, bala.y, BALA_ANCHO, BALA_ALTO,
+                               enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO))
+            {
+                golpeado = (int)j;
+                break;
+            }
         }
-        /* Colision de la bala enemiga contra el jugador */
-        else if(hayColisionBalaAJugador(balaE.x, balaE.y,
-                                        jugador.x, jugador.y))
-        {
-            jugador.vidas--;
-            vectorRemoveByPos(&vBalasEnemigo, i);
 
-            jugador.x = PLAYER_START_X;
-            jugador.y = PLAYER_START_Y;
+        if(golpeado >= 0)
+        {
+            /* "enemigo" quedo con el que choco (el ultimo leido) */
+            enemigo_marcar_eliminado(enemigo.x, enemigo.y);
+            puntaje += puntosEnemigo[enemigo.tipo];
+
+            if(puntaje >= proximaVidaExtra)
+            {
+                jugador.vidas++;
+                proximaVidaExtra += PUNTAJE_VIDA_EXTRA;
+            }
+
+            vectorRemoveByPos(&vEnemigos, (unsigned)golpeado);
+            vectorRemoveByPos(&vBalasJugador, i);
+            /* no avanzo i: se corre la siguiente bala */
         }
         else
             i++;
     }
+}
 
-    /* Colision entre enemigos y jugador */
-    if(mapa_enemigo_toca_jugador(jugador.x, jugador.y))
-        jugador.vidas = 0;
+/* Bala enemiga contra el jugador: pierde una vida y vuelve al inicio */
+static void colisiones_bala_enemiga_jugador(void)
+{
+    unsigned i = 0;
+    Bala bala;
+
+    while(i < (unsigned)VectorCE(&vBalasEnemigo))
+    {
+        vectorGetByPos(&vBalasEnemigo, i, &bala);
+
+        if(game_hay_choque(bala.x, bala.y, BALA_ANCHO, BALA_ALTO,
+                           jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR))
+        {
+            jugador.vidas--;
+            jugador.x = PLAYER_START_X;
+            jugador.y = PLAYER_START_Y;
+
+            vectorRemoveByPos(&vBalasEnemigo, i);
+        }
+        else
+            i++;
+    }
+}
+
+/* La formacion llego al jugador: se termina la partida */
+static void colisiones_enemigos_jugador(void)
+{
+    unsigned i = 0;
+    tEnemigo enemigo;
+
+    while(i < (unsigned)VectorCE(&vEnemigos))
+    {
+        vectorGetByPos(&vEnemigos, i, &enemigo);
+
+        if(game_hay_choque(enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO,
+                           jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR))
+        {
+            jugador.vidas = 0;
+            return;
+        }
+
+        i++;
+    }
+}
+
+/* Deteccion de colisiones (paso del ciclo del juego).
+   El ORDEN importa: una bala puede morir una sola vez. */
+static void game_colisiones(void)
+{
+    colisiones_bala_escudo(&vBalasJugador);          /* bala jugador vs escudo */
+    colisiones_balas_jugador_bala_enemiga();         /* bala jugador vs bala enemiga */
+    colisiones_balas_jugador_enemigos();             /* bala jugador vs enemigo */
+    colisiones_bala_escudo(&vBalasEnemigo);          /* bala enemiga vs escudo */
+    colisiones_bala_enemiga_jugador();               /* bala enemiga vs jugador */
+    colisiones_enemigos_jugador();                   /* enemigo vs jugador */
 }
 
 static void game_actualizar_disparos(void)
@@ -348,17 +404,18 @@ bool gameCrear(SDL_Renderer *render)
     }
     balasEnemigoCreadas = true;
 
-    if(!mapa_sprites_cargar(render))
+    if(!enemigo_cargar(render) || !mapa_sprites_cargar(render))
     {
         gameDestruir();
         return false;
     }
 
-    if(!mapa_enemigos_iniciar())
+    if(!enemigo_iniciar(&vEnemigos))
     {
         gameDestruir();
         return false;
     }
+    enemigosCreados = true;
 
     if(!mapa_escudos_iniciar())
     {
@@ -451,7 +508,7 @@ void gameActualizar(float delta)
         tiempoMovimientoEnemigos -= intervaloMovimiento;
     }
 
-    if(!mapa_enemigos_hay_activos())
+    if(!enemigo_hay_activos(&vEnemigos))
     {
         if(ronda < RONDAS_PARA_GANAR)
         {
@@ -490,7 +547,7 @@ void gameDibujar(SDL_Renderer *render)
     rect.h = ALTO_JUGADOR;
 
     /* Dibujar enemigos */
-    mapa_enemigos_dibujar(render);
+    enemigo_dibujar(&vEnemigos, render);
 
     /* Dibujar escudos */
     mapa_escudos_dibujar(render);
@@ -549,7 +606,7 @@ void gameDestruir(void)
     //spriteLiberar(&sprEscudos);
 
     mapa_escudos_destruir();
-    mapa_enemigos_destruir();
+    enemigo_liberar();
     mapa_sprites_liberar();
 
     sonidoLiberar(sndDisparoJugador);
@@ -571,6 +628,12 @@ void gameDestruir(void)
     {
         vectorDestruir(&vBalasEnemigo);
         balasEnemigoCreadas = false;
+    }
+
+    if(enemigosCreados)
+    {
+        vectorDestruir(&vEnemigos);
+        enemigosCreados = false;
     }
 
     fuenteLiberar(fntPuntaje);

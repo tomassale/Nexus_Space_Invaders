@@ -1,20 +1,12 @@
 #include <SDL.h>
 #include "mapa.h"
-#include "game.h"
-#include "bala.h"
-#include "jugador.h"
-#include "recursos.h"
+#include "bala.h"      /* BALA_ANCHO / BALA_ALTO: los usa la colision */
 #include "sprites.h"
 #include "vector.h"
 #include "audio.h"
 #include <stdbool.h>
 
-#define FILAS_ENEMIGOS 5
-#define COLUMNAS_ENEMIGOS 11
-#define INICIO_X 20
-#define INICIO_Y 30
-#define SEPARACION_X 20
-#define SEPARACION_Y 15
+/* Posicion y separacion de los escudos en pantalla */
 #define ESCUDOS_INICIO_X 40
 #define ESCUDOS_INICIO_Y 170
 #define ESCUDOS_SEPARACION_X 50
@@ -39,28 +31,7 @@ static Vector vEscudos;
 static Vector vEscudosPartes;
 static int escudosCreados = 0;
 
-static tSprite sprCalamar[2] = {0};
-static tSprite sprCangrejo[2] = {0};
-static tSprite sprPulpo[2] = {0};
 static tSprite sprEscudo = {0};
-static tSprite sprEliminado = {0};
-static int frameAnimacion = 0;
-static int eliminadoX;
-static int eliminadoY;
-static int mostrarEliminado = 0;
-//static SDL_Surface *superficiesEscudo[CANT_ESCUDOS] = {0};
-//static SDL_Texture *texturasEscudo[CANT_ESCUDOS] = {0};
-
-static int direccion = 1;
-
-static const int tiposNivel1[FILAS_ENEMIGOS] =
-{
-    ENEMIGO_CALAMAR_VERDE,
-    ENEMIGO_CANGREJO_VERDE,
-    ENEMIGO_CANGREJO_TURQUESA,
-    ENEMIGO_PULPO_TURQUESA,
-    ENEMIGO_PULPO_MORADO
-};
 
 int mapa_escudos_iniciar(void)
 {
@@ -91,6 +62,7 @@ int mapa_escudos_iniciar(void)
             return 0;
         }
 
+        /* Cada escudo se divide en una grilla de partes chicas */
         for(fila = 0; fila < FILAS_ESCUDO; fila++)
         {
             for(columna = 0; columna < COLUMNAS_ESCUDO; columna++)
@@ -111,6 +83,7 @@ int mapa_escudos_iniciar(void)
     return 1;
 }
 
+/* Colision rectangular entre la bala y una parte del escudo */
 static int hayColisionBalaAEscudo(int x1, int y1, int x2, int y2)
 {
     return x1 < x2 + PARTE_ESCUDO_ANCHO &&
@@ -119,6 +92,7 @@ static int hayColisionBalaAEscudo(int x1, int y1, int x2, int y2)
     y1 + BALA_ALTO > y2;
 }
 
+/* Busca que parte del escudo golpeo la bala y la destruye */
 int mapa_escudo_impactado(int x, int y)
 {
     unsigned i = 0;
@@ -130,14 +104,12 @@ int mapa_escudo_impactado(int x, int y)
     {
         vectorGetByPos(&vEscudosPartes, i, &parte);
 
-        if(parte.activo && hayColisionBalaAEscudo(x,y,parte.x,parte.y))
+        if(parte.activo && hayColisionBalaAEscudo(x, y, parte.x, parte.y))
         {
-            eliminadoX=parte.x;
-            eliminadoY=parte.y;
-
-            parte.activo=0;
+            parte.activo = 0;
             mapa_destruir_parte_escudo(i);
 
+            /* A que escudo pertenece la parte golpeada */
             indiceEscudo = i / PARTES_POR_ESCUDO;
             mapa_actualizar_estado_escudo(indiceEscudo);
             return 1;
@@ -157,7 +129,7 @@ void mapa_destruir_parte_escudo(unsigned indiceParte)
     {
         parte.activo = 0;
 
-        vectorUpdateByPos(&vEscudosPartes,indiceParte,&parte);
+        vectorUpdateByPos(&vEscudosPartes, indiceParte, &parte);
     }
 }
 
@@ -169,6 +141,7 @@ void mapa_actualizar_estado_escudo(unsigned indiceEscudo)
     tParteEscudos parte;
     tEscudos escudo;
 
+    /* El escudo entero se apaga recien cuando no le queda ninguna parte viva */
     while(i < fin && !hayPartesActivas)
     {
         if(vectorGetByPos(&vEscudosPartes, i, &parte) &&
@@ -186,6 +159,7 @@ void mapa_actualizar_estado_escudo(unsigned indiceEscudo)
     }
 }
 
+/* Accion que el TDA aplica a cada escudo; el render llega en "datos" */
 static int dibujarEscudo(void *e, void *datos)
 {
     tEscudos *escudo = e;
@@ -284,34 +258,6 @@ int mapa_enemigos_obtener(tEnemigos *enemigo)
 
 bool mapa_sprites_cargar(SDL_Renderer *render)
 {
-    if(!spriteCargar(&sprCalamar[0], render,
-                     "assets/images/calamar.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprCalamar[1], render,
-                     "assets/images/calamar_anim.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprCangrejo[0], render,
-                     "assets/images/cangrejo.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprCangrejo[1], render,
-                     "assets/images/cangrejo_anim.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprPulpo[0], render,
-                     "assets/images/pulpo.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprPulpo[1], render,
-                     "assets/images/pulpo_anim.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprEliminado, render,
-                     "assets/images/eliminado.png", 1, 0))
-        return false;
-
     if(!spriteCargar(&sprEscudo, render,
                      "assets/images/escudo.png", 1, 0))
         return false;
@@ -522,12 +468,5 @@ int mapa_enemigo_toca_jugador(int x, int y)
 
 void mapa_sprites_liberar(void)
 {
-    spriteLiberar(&sprCalamar[0]);
-    spriteLiberar(&sprCangrejo[0]);
-    spriteLiberar(&sprPulpo[0]);
-    spriteLiberar(&sprCalamar[1]);
-    spriteLiberar(&sprCangrejo[1]);
-    spriteLiberar(&sprPulpo[1]);
-    spriteLiberar(&sprEliminado);
     spriteLiberar(&sprEscudo);
 }

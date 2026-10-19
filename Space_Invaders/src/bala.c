@@ -31,7 +31,7 @@ int bala_en_pantalla(const void *elem, void *contexto)
     if(bala->y + BALA_ALTO <= 0)
         return 0;
 
-    if(bala->y >= motorAlto())
+    if(bala->y >= motorAltoLogico())
         return 0;
 
     return 1;
