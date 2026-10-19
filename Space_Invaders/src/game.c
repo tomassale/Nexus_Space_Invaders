@@ -4,6 +4,7 @@
 
 #include "game.h"
 #include "jugador.h"
+#include "enemigo.h"
 #include "disparo.h"
 #include "mapa.h"
 #include "bala.h"
@@ -91,14 +92,14 @@ static void game_disparar_jugador(void)
 
 static void game_disparar_enemigo(void)
 {
-    tEnemigos enemigo;
+    tEnemigo enemigo;
     Bala bala;
     int x, y;
 
     if(VectorCE(&vBalasEnemigo) != 0)
         return;
 
-    if(!mapa_enemigos_obtener(&enemigo))
+    if(!enemigo_obtener(&enemigo))
         return;
 
     x = enemigo.x + (ENEMIGO_ANCHO / 2) - (BALA_ANCHO / 2);
@@ -181,8 +182,8 @@ static void game_colisiones(void)
         /* Colision de la bala del jugador contra un enemigo */
         if(!balaJEliminada)
         {
-            if(mapa_enemigo_impactado(balaJ.x, balaJ.y,
-                                      &tipoEliminado))
+            if(enemigo_impactado(balaJ.x, balaJ.y,
+                                 &tipoEliminado))
             {
                 vectorRemoveByPos(&vBalasJugador, i);
                 balaJEliminada = 1;
@@ -228,7 +229,7 @@ static void game_colisiones(void)
     }
 
     /* Colision entre enemigos y jugador */
-    if(mapa_enemigo_toca_jugador(jugador.x, jugador.y))
+    if(enemigo_toca_jugador(jugador.x, jugador.y))
         jugador.vidas = 0;
 }
 
@@ -299,13 +300,13 @@ bool gameCrear(SDL_Renderer *render)
     }
     balasEnemigoCreadas = true;
 
-    if(!mapa_sprites_cargar(render))
+    if(!enemigo_cargar(render) || !mapa_sprites_cargar(render))
     {
         gameDestruir();
         return false;
     }
 
-    if(!mapa_enemigos_iniciar())
+    if(!enemigo_iniciar())
     {
         gameDestruir();
         return false;
@@ -369,11 +370,11 @@ void gameActualizar(float delta)
 
     if(tiempoMovimientoEnemigos >= 0.5f)
     {
-        mapa_enemigos_mover();
+        enemigo_mover();
         tiempoMovimientoEnemigos -= 0.5f;
     }
 
-    if(!mapa_enemigos_hay_activos())
+    if(!enemigo_hay_activos())
     {
         /*gestionar la victoria */
     }
@@ -405,7 +406,7 @@ void gameDibujar(SDL_Renderer *render)
     rect.h = ALTO_JUGADOR;
 
     /* Dibujar enemigos */
-    mapa_enemigos_dibujar(render);
+    enemigo_dibujar(render);
 
     /* Dibujar escudos */
     mapa_escudos_dibujar(render);
@@ -445,7 +446,8 @@ void gameDestruir(void)
     //spriteLiberar(&sprEscudos);
 
     mapa_escudos_destruir();
-    mapa_enemigos_destruir();
+    enemigo_destruir();
+    enemigo_liberar();
     mapa_sprites_liberar();
 
     sonidoLiberar(sndDisparoJugador);

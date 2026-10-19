@@ -2,18 +2,9 @@
 #define MAPA_H_INCLUDED
 
 #include <stdbool.h>
+#include <SDL.h>
 
-typedef struct
-{
-    int x;
-    int y;
-    int activo;
-    int tipo;
-}tEnemigos;
-
-#define ENEMIGO_ANCHO 12
-#define ENEMIGO_ALTO 8
-
+/* Escudos: cada escudo esta armado con partes chicas que se destruyen de a una */
 typedef struct
 {
     int x;
@@ -41,27 +32,15 @@ typedef struct
 #define PARTES_POR_ESCUDO (COLUMNAS_ESCUDO * FILAS_ESCUDO)
 #define PARTES_ESCUDOS_TOTAL (CANT_ESCUDOS * PARTES_POR_ESCUDO)
 
-#define ENEMIGO_CALAMAR_VERDE       0
-#define ENEMIGO_CANGREJO_VERDE      1
-#define ENEMIGO_CANGREJO_TURQUESA   2
-#define ENEMIGO_PULPO_TURQUESA      3
-#define ENEMIGO_PULPO_MORADO        4
-
-
-int mapa_enemigos_iniciar(void);
-void mapa_enemigos_destruir(void);
-void mapa_enemigos_mover(void);
-int mapa_enemigo_impactado(int x, int y, int *tipoEliminado);
-int mapa_enemigos_obtener(tEnemigos *enemigo);
-int mapa_enemigo_toca_jugador(int x, int y);
 int mapa_escudos_iniciar(void);
 int mapa_escudo_impactado(int x, int y);
 void mapa_destruir_parte_escudo(unsigned indiceParte);
 void mapa_actualizar_estado_escudo(unsigned indiceEscudo);
 void mapa_escudos_dibujar(SDL_Renderer *render);
 void mapa_escudos_destruir(void);
-void mapa_enemigos_dibujar(SDL_Renderer *render);
+
+/* Sprites del mapa (hoy: solo el escudo) */
 bool mapa_sprites_cargar(SDL_Renderer *render);
-int mapa_enemigos_hay_activos(void);
 void mapa_sprites_liberar(void);
+
 #endif // MAPA_H_INCLUDED
