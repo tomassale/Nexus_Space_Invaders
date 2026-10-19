@@ -4,6 +4,7 @@
 
 #include "game.h"
 #include "jugador.h"
+#include "enemigo.h"
 #include "mapa.h"
 #include "sprites.h"
 #include "audio.h"
@@ -71,7 +72,7 @@ static void game_disparar_enemigo(void)
     if(VectorCE(&vBalasEnemigo) >= MAX_BALAS_ENEMIGAS)
         return;
 
-    if(!mapa_enemigo_disparador(&xCentro, &yBase))
+    if(!enemigo_disparador(&xCentro, &yBase))
         return;
 
     bala_crear(&bala, xCentro - (BALA_ANCHO / 2), yBase);
@@ -136,13 +137,13 @@ bool gameCrear(SDL_Renderer *render)
         return false;
     }
 
-    if(!mapa_sprites_cargar(render))
+    if(!enemigo_cargar(render) || !mapa_sprites_cargar(render))
     {
         gameDestruir();
         return false;
     }
 
-    mapa_enemigos_iniciar();
+    enemigo_iniciar();
     mapa_escudos_iniciar();
     ejecutando = true;
 
@@ -202,11 +203,11 @@ void gameActualizar(float delta)
 
     if(tiempoMovimientoEnemigos >= 0.5f)
     {
-        mapa_enemigos_mover();
+        enemigo_mover();
         tiempoMovimientoEnemigos -= 0.5f;
     }
 
-    if(!mapa_enemigos_hay_activos())
+    if(!enemigo_hay_activos())
     {
         /* Ac� ten�s que gestionar la victoria */
     }
@@ -233,7 +234,7 @@ void gameDibujar(SDL_Renderer *render)
     jugador_dibujar(&jugador, render);
 
     /* Dibujar enemigos */
-    mapa_enemigos_dibujar(render);
+    enemigo_dibujar(render);
 
     /* Dibujar escudos */
     mapa_escudos_dibujar(render);
@@ -273,6 +274,7 @@ void gameDestruir(void)
     //spriteLiberar(&sprEnemigos);
     //spriteLiberar(&sprEscudos);
 
+    enemigo_liberar();
     mapa_sprites_liberar();
 
     sonidoLiberar(sndDisparoJugador);
