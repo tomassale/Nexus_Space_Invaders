@@ -51,6 +51,7 @@ typedef struct
 int mapa_enemigos_iniciar(void);
 void mapa_enemigos_destruir(void);
 void mapa_enemigos_mover(void);
+float mapa_enemigos_intervalo_movimiento(void);
 int mapa_enemigo_impactado(int x, int y, int *tipoEliminado);
 int mapa_enemigos_obtener(tEnemigos *enemigo);
 int mapa_enemigo_toca_jugador(int x, int y);

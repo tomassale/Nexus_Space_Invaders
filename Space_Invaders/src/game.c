@@ -12,7 +12,9 @@
 #include "fonts.h"
 #include "vector.h"
 
-#define ANCHO_CARACTER 6
+#define CANT_PASOS 4
+#define RONDAS_PARA_GANAR 1
+
 #define ALTO_CARACTER 8
 
 
@@ -36,6 +38,8 @@
 
 static bool ejecutando = false;
 static bool pausa = false;
+static bool derrota = false;
+static bool victoria = false;
 static int puntaje;
 static int ronda;
 
@@ -54,10 +58,14 @@ static tSprite sprJugador = {0};
 //static tSprite sprEnemigos;
 
 static tSonido *sndDisparoJugador;
-//static tSonido *sndExplosion;
+static tSonido *sndExplosion;
 static tSonido *sndDisparoEnemigo;
-//static tSonido *sndFinalNivel;
-//static tSonido *sndNaveBajando;
+static tSonido *sndFinalNivel;
+static tSonido *sndNaveBajando[CANT_PASOS];
+
+static int canalFinalNivel = -1;
+static int pasoActual = 0;
+static bool transicionRonda = false;
 
 static tFuente *fntPuntaje;
 static const int puntosEnemigo[] = {
@@ -241,25 +249,65 @@ static void game_actualizar_disparos(void)
     vectorFilter(&vBalasEnemigo, bala_en_pantalla, NULL);
 }
 
+static void game_dibujar_texto_centrado(SDL_Renderer *render, const char *texto,
+                                        int y, SDL_Color color)
+{
+    int x = (VENTANA_X - fuenteAncho(fntPuntaje, texto)) / 2;
 
-/*
-//Mapa
-static void gameMapa(){}
+    fuenteDibujar(render, fntPuntaje, texto, x, y, color);
+}
 
-//Recursos
-static void gameEscudos(){}
-static void gameScore(){}
-static void gamePause(){}
-*/
+static void game_dibujar_transicion(SDL_Renderer *render)
+{
+    SDL_Color blanco = {255, 255, 255, 255};
+    char texto[32];
+
+    SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
+    SDL_RenderClear(render);
+
+    snprintf(texto, sizeof(texto), "RONDA %d", ronda + 1);
+    game_dibujar_texto_centrado(render, texto, (VENTANA_Y - ALTO_CARACTER) / 2, blanco);
+}
+
+
+static void game_iniciar_ronda(int numero)
+{
+    ronda = numero;
+    pasoActual = 0;
+
+    jugador.x = PLAYER_START_X;
+    jugador.y = PLAYER_START_Y;
+
+    vectorDestruir(&vBalasJugador);
+    vectorCrear(&vBalasJugador, 8, sizeof(Bala));
+    vectorDestruir(&vBalasEnemigo);
+    vectorCrear(&vBalasEnemigo, 8, sizeof(Bala));
+
+    mapa_enemigos_destruir();
+    mapa_enemigos_iniciar();
+    mapa_escudos_destruir();
+    mapa_escudos_iniciar();
+}
 
 /*** FUNCIONES PUBLICAS ***/
 
 bool gameCrear(SDL_Renderer *render)
 {
+    char ruta[64];
+    int i;
+
     audioVolumen(30);
     sndDisparoJugador = sonidoCargar("assets/audio/disparo_jugador.wav");
     sndDisparoEnemigo = sonidoCargar("assets/audio/disparo_enemigo.wav");
+    sndFinalNivel = sonidoCargar("assets/audio/final_nivel.wav");
+
     fntPuntaje = fuenteCargar("assets/fonts/space_invaders.ttf", 8);
+
+    for(i = 0; i < CANT_PASOS; i++)
+    {
+        snprintf(ruta, sizeof(ruta), "assets/audio/fastinvader%d.wav", i + 1);
+        sndNaveBajando[i] = sonidoCargar(ruta);
+    }
 
     if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
             !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
@@ -268,7 +316,8 @@ bool gameCrear(SDL_Renderer *render)
         return false;
     }
 
-    if(!sndDisparoJugador || !sndDisparoEnemigo)
+    if(!sndDisparoJugador || !sndDisparoEnemigo || !sndFinalNivel ||
+       !sndNaveBajando[0] || !sndNaveBajando[1] || !sndNaveBajando[2] || !sndNaveBajando[3])
     {
         gameDestruir();
         return false;
@@ -333,11 +382,21 @@ void gameProcesarEventos(void)
         if(evento.type == SDL_KEYDOWN &&
                 evento.key.repeat == 0)
         {
-            if(evento.key.keysym.sym == SDLK_ESCAPE)
+            if(evento.key.keysym.sym == SDLK_ESCAPE && !transicionRonda)
                 pausa = !pausa;
 
-            if(evento.key.keysym.sym == SDLK_SPACE && !pausa)
+            if(evento.key.keysym.sym == SDLK_SPACE && !pausa && !derrota && !transicionRonda)
                 game_disparar_jugador();
+
+            if(evento.key.keysym.sym == SDLK_r && (derrota || victoria))
+            {
+                derrota = false;
+                victoria=false;
+                puntaje = 0;
+                proximaVidaExtra = PUNTAJE_VIDA_EXTRA;
+                jugador_iniciar(&jugador);
+                game_iniciar_ronda(1);
+            }
         }
 
     }
@@ -347,11 +406,22 @@ void gameActualizar(float delta)
 {
     const Uint8 *teclado;
     static float tiempoMovimientoEnemigos = 0.0f;
+    float intervaloMovimiento;
 
     (void)delta;
 
-    if(pausa)
+    if(pausa || derrota || victoria)
         return;
+
+    if(transicionRonda)
+    {
+        if(!sonidoSonando(canalFinalNivel))
+        {
+            transicionRonda = false;
+            game_iniciar_ronda(ronda + 1);
+        }
+        return;
+    }
 
     teclado = SDL_GetKeyboardState(NULL);
 
@@ -363,19 +433,34 @@ void gameActualizar(float delta)
 
     game_actualizar_disparos();
     game_colisiones();
+    if(jugador.vidas<=0)
+    {
+        derrota=true;
+        return;
+    }
     game_cooldown_enemigo(delta);
 
     tiempoMovimientoEnemigos += delta;
+    intervaloMovimiento = mapa_enemigos_intervalo_movimiento();
 
-    if(tiempoMovimientoEnemigos >= 0.5f)
+    if(tiempoMovimientoEnemigos >= intervaloMovimiento)
     {
         mapa_enemigos_mover();
-        tiempoMovimientoEnemigos -= 0.5f;
+        sonidoReproducir(sndNaveBajando[pasoActual]);
+        pasoActual = (pasoActual + 1) % CANT_PASOS;
+        tiempoMovimientoEnemigos -= intervaloMovimiento;
     }
 
     if(!mapa_enemigos_hay_activos())
     {
-        /*gestionar la victoria */
+        if(ronda < RONDAS_PARA_GANAR)
+        {
+            transicionRonda = true;
+            canalFinalNivel = sonidoReproducir(sndFinalNivel);
+        }else{
+            victoria= true;
+        }
+
     }
 }
 
@@ -416,8 +501,8 @@ void gameDibujar(SDL_Renderer *render)
     /* Dibujar disparo enemigo */
     vectorMap(&vBalasEnemigo, bala_dibujar, render);
 
-    /*Dibujar pausa*/
-    if(pausa)
+    /*Dibujar pausa/derrota/victoria*/
+    if(pausa || derrota || victoria)
     {
         SDL_SetRenderDrawBlendMode(render, SDL_BLENDMODE_BLEND);
         SDL_SetRenderDrawColor(render, 0, 0, 0, 160);
@@ -427,8 +512,24 @@ void gameDibujar(SDL_Renderer *render)
         rect.w = VENTANA_X;
         rect.h = VENTANA_Y;
         SDL_RenderFillRect(render, &rect);
+        if(derrota)
+        {
+            game_dibujar_texto_centrado(render, "DERROTA", (VENTANA_Y - ALTO_CARACTER)/2, blanco);
+            game_dibujar_texto_centrado(render, "PRESIONA R PARA REINICIAR", ((VENTANA_Y - ALTO_CARACTER)/2) + 16, blanco);
+        }
+        else if(victoria)
+        {
+            game_dibujar_texto_centrado(render, "VICTORIA", ((VENTANA_Y - ALTO_CARACTER)/2) - 8, blanco);
+            game_dibujar_texto_centrado(render, "PRESIONA R PARA REINICIAR", ((VENTANA_Y - ALTO_CARACTER)/2) + 8, blanco);
+        }else{
+            game_dibujar_texto_centrado(render, "PAUSA", (VENTANA_Y - ALTO_CARACTER)/2, blanco);
+        }
+    }
 
-        fuenteDibujar(render, fntPuntaje, "PAUSA", (VENTANA_X - (ANCHO_CARACTER * 5)) / 2, (VENTANA_Y - ALTO_CARACTER)/2, blanco);
+    if(transicionRonda)
+    {
+        game_dibujar_transicion(render);
+        return;
     }
 }
 
@@ -439,6 +540,9 @@ bool gameEjecutando(void)
 
 void gameDestruir(void)
 {
+
+    int i;
+
     spriteLiberar(&sprFondo);
     spriteLiberar(&sprJugador);
     //spriteLiberar(&sprEnemigos);
@@ -450,19 +554,18 @@ void gameDestruir(void)
 
     sonidoLiberar(sndDisparoJugador);
     sonidoLiberar(sndDisparoEnemigo);
-    //sonidoLiberar(sndFinalNivel);
-    //sonidoLiberar(sndNaveBajando);
+    sonidoLiberar(sndExplosion);
+    sonidoLiberar(sndFinalNivel);
+    for(i = 0; i < CANT_PASOS; i++)
+        sonidoLiberar(sndNaveBajando[i]);
 
-    sndDisparoJugador = NULL;
-    sndDisparoEnemigo = NULL;
-    //sndFinalNivel = NULL;
-    //sndNaveBajando = NULL;
 
-     if(balasJugadorCreadas)
-     {
+
+    if(balasJugadorCreadas)
+    {
         vectorDestruir(&vBalasJugador);
         balasJugadorCreadas = false;
-     }
+    }
 
     if(balasEnemigoCreadas)
     {

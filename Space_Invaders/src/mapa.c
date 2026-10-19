@@ -6,6 +6,7 @@
 #include "recursos.h"
 #include "sprites.h"
 #include "vector.h"
+#include "audio.h"
 #include <stdbool.h>
 
 #define FILAS_ENEMIGOS 5
@@ -21,6 +22,9 @@
 #define VENTANA_X 256
 #define VENTANA_Y 240
 #define VELOCIDAD_ENEMIGOS 2
+#define TOTAL_ENEMIGOS (FILAS_ENEMIGOS * COLUMNAS_ENEMIGOS)
+#define INTERVALO_MOVIMIENTO_MAX 0.5f
+#define INTERVALO_MOVIMIENTO_MIN 0.05f
 #define DESCENSO_ENEMIGOS 10
 #define ALTURA_AMARILLA 150
 
@@ -218,7 +222,7 @@ int mapa_enemigos_iniciar(void)
     tEnemigos enemigo;
 
     if(!vectorCrear(&vEnemigos,
-                    FILAS_ENEMIGOS * COLUMNAS_ENEMIGOS,
+                    TOTAL_ENEMIGOS,
                     sizeof(tEnemigos)))
         return 0;
 
@@ -427,6 +431,15 @@ void mapa_enemigos_mover(void)
         direccion *= -1;
 
     vectorMap(&vEnemigos, moverEnemigo, &llegoAlBorde);
+}
+
+/* Cuantos menos enemigos quedan, menos espera entre pasos: la oleada acelera. */
+float mapa_enemigos_intervalo_movimiento(void)
+{
+    float proporcionVivos = (float)VectorCE(&vEnemigos) / TOTAL_ENEMIGOS;
+
+    return INTERVALO_MOVIMIENTO_MIN +
+           (INTERVALO_MOVIMIENTO_MAX - INTERVALO_MOVIMIENTO_MIN) * proporcionVivos;
 }
 
 static int hayColisionBalaAEnemigo(int x1, int y1, int x2, int y2)

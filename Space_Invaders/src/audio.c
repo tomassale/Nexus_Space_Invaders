@@ -35,10 +35,16 @@ tSonido* sonidoCargar(const char *ruta)
     return s;
 }
 
-void sonidoReproducir(tSonido *s)
+int sonidoReproducir(tSonido *s)
 {
-    if(s)
-        Mix_PlayChannel(-1, s, 0); //-1 = primer canal libre
+    if(!s)
+        return -1;
+    return Mix_PlayChannel(-1, s, 0); //-1 = primer canal libre
+}
+
+bool sonidoSonando(int canal)
+{
+    return canal >= 0 && Mix_Playing(canal);
 }
 
 void sonidoLiberar(tSonido *s)
