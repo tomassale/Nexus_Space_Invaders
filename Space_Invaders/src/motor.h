@@ -7,6 +7,10 @@
 #include "audio.h"
 #include "fonts.h"
 
+/* Resolucion logica del juego: todo se dibuja y se mueve en este espacio */
+#define VENTANA_X 256
+#define VENTANA_Y 240
+
 bool motorCrear(const char* titulo, int an, int al);
 void motorLimpiar(void);
 void motorPresentar(void);
