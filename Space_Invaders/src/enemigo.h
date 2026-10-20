@@ -8,8 +8,6 @@
 // Tamano en pantalla de cada enemigo
 #define ENEMIGO_ANCHO 12
 #define ENEMIGO_ALTO  8
-#define ENEMIGO_VELOCIDAD 1
-#define ENEMIGO_DESCENSO 16
 
 // Tipo de enemigo: define que sprite usa y cuanto puntaje otorga
 #define ENEMIGO_CALAMAR_VERDE       0
@@ -18,8 +16,8 @@
 #define ENEMIGO_PULPO_TURQUESA      3
 #define ENEMIGO_PULPO_MORADO        4
 
-#define ESCUDOS_INICIO_Y 170
-#define ALTURA_ROJA (ESCUDOS_INICIO_Y - ENEMIGO_ALTO)
+/* Altura a la que la formacion llega a los escudos: ahi se pinta en rojo */
+#define ENEMIGO_ALTURA_ROJA 162
 
 // Estructura de UN enemigo de la formacion
 typedef struct
@@ -32,10 +30,6 @@ typedef struct
 
 /* La coleccion de enemigos (un Vector) la declara y la guarda el juego.
    El modulo solo sabe como crearla y como trabajar con ella. */
-
-/* Sprites */
-bool enemigo_cargar(SDL_Renderer *render);
-void enemigo_liberar(void);
 
 /* Formacion: crea la coleccion y le carga los enemigos */
 int  enemigo_iniciar(Vector *vEnemigos);

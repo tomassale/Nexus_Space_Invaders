@@ -74,6 +74,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/bala.h" />
+		<Unit filename="src/colision.h" />
 		<Unit filename="src/enemigo.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -90,10 +91,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="src/jugador.h" />
-		<Unit filename="src/mapa.c">
+		<Unit filename="src/escudo.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="src/mapa.h" />
+		<Unit filename="src/escudo.h" />
 		<Unit filename="src/motor.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -194,15 +194,3 @@ void motorEsperar()
         SDL_Delay(FRAME_TIME - tiempo_frame);
     }
 }
-
-void listarRenderizadores(void)
-{
-    int cantidad = SDL_GetNumRenderDrivers();
-    SDL_RendererInfo info;
-
-    for(int i=0; i<cantidad ; i++)
-    {
-        SDL_GetRenderDriverInfo(i,&info);
-        //printf("Renderer %d: %s\n", i, info.name);
-    }
-}

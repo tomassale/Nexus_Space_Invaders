@@ -5,34 +5,21 @@
 #include "game.h"
 #include "jugador.h"
 #include "enemigo.h"
-#include "disparo.h"
-#include "mapa.h"
+#include "escudo.h"
 #include "bala.h"
+#include "recursos.h"
 #include "sprites.h"
 #include "audio.h"
 #include "fonts.h"
 #include "vector.h"
+#include "colision.h"
 
 #define CANT_PASOS 4
 #define RONDAS_PARA_GANAR 2
 
-#define RUTA_IMAGEN_MENU "assets/images/menu.png"
 #define RUTA_MUSICA_MENU "assets/audio/spaceinvaders1.mpeg"
 
 #define ALTO_CARACTER 8
-
-
-//#define JUGADOR_ANCHO 20
-//#define JUGADOR_ALTO 10
-
-
-#define ANCHO_DISPARO 2
-#define ALTO_DISPARO 10
-
-#define DESPLAZAMIENTO_CANNON_X ((ANCHO_JUGADOR)/2)-((ANCHO_DISPARO)/2)
-
-#define VELOCIDAD_DISPARO_JUGADOR 8
-#define VELOCIDAD_DISPARO_ENEMIGO 5
 
 /* Resolucion logica del juego */
 #define VENTANA_X 256
@@ -54,20 +41,16 @@ static tJugador jugador;
 static Vector vBalasJugador;
 static Vector vBalasEnemigo;
 static Vector vEnemigos;
+static Vector vEscudos;
+static Vector vEscudosPartes;
 static bool balasJugadorCreadas = false;
 static bool balasEnemigoCreadas = false;
 static bool enemigosCreados = false;
+static bool escudosCreados = false;
 static float tiempoDisparo = 0;
 
 
-static tSprite sprFondo = {0};
-static tSprite sprJugador = {0};
-static tSprite sprMenu = {0};
-//static tSprite sprEscudos;
-//static tSprite sprEnemigos;
-
 static tSonido *sndDisparoJugador;
-static tSonido *sndExplosion;
 static tSonido *sndDisparoEnemigo;
 static tSonido *sndFinalNivel;
 static tSonido *sndNaveBajando[CANT_PASOS];
@@ -139,16 +122,6 @@ static void game_cooldown_enemigo(float delta)
     }
 }
 
-/* Test unico: se superponen dos rectangulos? (x, y, ancho, alto) */
-static bool game_hay_choque(int x1, int y1, int ancho1, int alto1,
-                            int x2, int y2, int ancho2, int alto2)
-{
-    bool separadosEnX = x1 >= x2 + ancho2 || x1 + ancho1 <= x2;
-    bool separadosEnY = y1 >= y2 + alto2 || y1 + alto1 <= y2;
-
-    return !separadosEnX && !separadosEnY;
-}
-
 /* Bala (de cualquiera de las dos colecciones) contra un escudo */
 static void colisiones_bala_escudo(Vector *vBalas)
 {
@@ -159,7 +132,8 @@ static void colisiones_bala_escudo(Vector *vBalas)
     {
         vectorGetByPos(vBalas, i, &bala);
 
-        if(mapa_escudo_impactado(bala.x, bala.y))
+        if(escudo_impactado(&vEscudos, &vEscudosPartes,
+                            bala.x, bala.y, BALA_ANCHO, BALA_ALTO))
             vectorRemoveByPos(vBalas, i);   /* no avanzo i: se corre la siguiente */
         else
             i++;
@@ -182,8 +156,8 @@ static void colisiones_balas_jugador_bala_enemiga(void)
         {
             vectorGetByPos(&vBalasEnemigo, j, &balaE);
 
-            if(game_hay_choque(balaJ.x, balaJ.y, BALA_ANCHO, BALA_ALTO,
-                               balaE.x, balaE.y, BALA_ANCHO, BALA_ALTO))
+            if(hay_choque(balaJ.x, balaJ.y, BALA_ANCHO, BALA_ALTO,
+                          balaE.x, balaE.y, BALA_ANCHO, BALA_ALTO))
             {
                 vectorRemoveByPos(&vBalasJugador, i);
                 vectorRemoveByPos(&vBalasEnemigo, j);
@@ -215,8 +189,8 @@ static void colisiones_balas_jugador_enemigos(void)
         {
             vectorGetByPos(&vEnemigos, j, &enemigo);
 
-            if(game_hay_choque(bala.x, bala.y, BALA_ANCHO, BALA_ALTO,
-                               enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO))
+            if(hay_choque(bala.x, bala.y, BALA_ANCHO, BALA_ALTO,
+                          enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO))
             {
                 golpeado = (int)j;
                 break;
@@ -254,8 +228,8 @@ static void colisiones_bala_enemiga_jugador(void)
     {
         vectorGetByPos(&vBalasEnemigo, i, &bala);
 
-        if(game_hay_choque(bala.x, bala.y, BALA_ANCHO, BALA_ALTO,
-                           jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR))
+        if(hay_choque(bala.x, bala.y, BALA_ANCHO, BALA_ALTO,
+                      jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR))
         {
             jugador.vidas--;
             jugador.x = PLAYER_START_X;
@@ -278,8 +252,8 @@ static void colisiones_enemigos_jugador(void)
     {
         vectorGetByPos(&vEnemigos, i, &enemigo);
 
-        if(game_hay_choque(enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO,
-                           jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR))
+        if(hay_choque(enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO,
+                      jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR))
         {
             jugador.vidas = 0;
             return;
@@ -289,8 +263,25 @@ static void colisiones_enemigos_jugador(void)
     }
 }
 
-/* Deteccion de colisiones (paso del ciclo del juego).
-   El ORDEN importa: una bala puede morir una sola vez. */
+/* La formacion baja y va rompiendo los escudos que toca.
+   La interaccion la coordina el juego: escudo y enemigo no se conocen. */
+static void game_enemigos_rompen_escudos(void)
+{
+    unsigned i;
+    unsigned cantidad = (unsigned)VectorCE(&vEnemigos);
+    tEnemigo enemigo;
+
+    for(i = 0; i < cantidad; i++)
+    {
+        if(vectorGetByPos(&vEnemigos, i, &enemigo) && enemigo.activo)
+            escudo_romper_rect(&vEscudos, &vEscudosPartes,
+                               enemigo.x, enemigo.y, ENEMIGO_ANCHO, ENEMIGO_ALTO);
+    }
+}
+
+/** Deteccion de colisiones (paso del ciclo del juego)**/
+
+//El orden aca importa: una bala puede morir una sola vez
 static void game_colisiones(void)
 {
     colisiones_bala_escudo(&vBalasJugador);          /* bala jugador vs escudo */
@@ -321,15 +312,16 @@ static void game_dibujar_texto_centrado(SDL_Renderer *render, const char *texto,
 static void game_dibujar_menu(SDL_Renderer *render)
 {
     SDL_Color blanco = {255, 255, 255, 255};
+    const tSprite *menu = recursos_menu();
 
     /* Sin imagen de portada, se usa el fondo del juego con el titulo en texto */
-    if(sprMenu.textura)
+    if(menu->textura)
     {
-        spriteDibujar(render, &sprMenu, 0, 0, VENTANA_X, VENTANA_Y);
+        spriteDibujar(render, menu, 0, 0, VENTANA_X, VENTANA_Y);
     }
     else
     {
-        spriteDibujar(render, &sprFondo, 0, 0, VENTANA_X, VENTANA_Y);
+        spriteDibujar(render, recursos_fondo(), 0, 0, VENTANA_X, VENTANA_Y);
         game_dibujar_texto_centrado(render, "SPACE INVADERS", VENTANA_Y / 3, blanco);
     }
 
@@ -373,8 +365,8 @@ static void game_iniciar_ronda(int numero)
 
     vectorDestruir(&vEnemigos);
     enemigo_iniciar(&vEnemigos);
-    mapa_escudos_destruir();
-    mapa_escudos_iniciar();
+    escudo_destruir(&vEscudos, &vEscudosPartes);
+    escudo_iniciar(&vEscudos, &vEscudosPartes);
 }
 
 /*** FUNCIONES PUBLICAS ***/
@@ -397,8 +389,7 @@ bool gameCrear(SDL_Renderer *render)
         sndNaveBajando[i] = sonidoCargar(ruta);
     }
 
-    if(!spriteCargar(&sprJugador, render, "assets/images/jugador.png", 1, 0) ||
-            !spriteCargar(&sprFondo, render, "assets/images/fondo.jpg", 1, 0))
+    if(!recursos_cargar(render))
     {
         gameDestruir();
         return false;
@@ -436,12 +427,6 @@ bool gameCrear(SDL_Renderer *render)
     }
     balasEnemigoCreadas = true;
 
-    if(!enemigo_cargar(render) || !mapa_sprites_cargar(render))
-    {
-        gameDestruir();
-        return false;
-    }
-
     if(!enemigo_iniciar(&vEnemigos))
     {
         gameDestruir();
@@ -449,14 +434,14 @@ bool gameCrear(SDL_Renderer *render)
     }
     enemigosCreados = true;
 
-    if(!mapa_escudos_iniciar())
+    if(!escudo_iniciar(&vEscudos, &vEscudosPartes))
     {
         gameDestruir();
         return false;
     }
+    escudosCreados = true;
 
-    /* La portada y la musica son opcionales: si faltan, el juego arranca igual */
-    spriteCargar(&sprMenu, render, RUTA_IMAGEN_MENU, 1, 0);
+    /* La musica es opcional: si falta, el juego arranca igual */
     musicaReproducir(RUTA_MUSICA_MENU, true);
 
     enMenu = true;
@@ -548,7 +533,7 @@ void gameActualizar(float delta)
     {
         enemigo_mover(&vEnemigos);
 
-        mapa_enemigos_rompen_escudos(&vEnemigos);
+        game_enemigos_rompen_escudos();
 
         sonidoReproducir(sndNaveBajando[pasoActual]);
         pasoActual = (pasoActual + 1) % CANT_PASOS;
@@ -579,7 +564,7 @@ void gameDibujar(SDL_Renderer *render)
     }
 
     /*Dibujar fondo*/
-    spriteDibujar(render, &sprFondo, 0, 0, VENTANA_X, VENTANA_Y);
+    spriteDibujar(render, recursos_fondo(), 0, 0, VENTANA_X, VENTANA_Y);
 
     /*Dibujar puntaje*/
     SDL_Color blanco = {255, 255, 255, 255};
@@ -592,7 +577,7 @@ void gameDibujar(SDL_Renderer *render)
     fuenteDibujar(render, fntPuntaje, buf, 8, 17, blanco);
 
     /* Dibujar jugador */
-    spriteDibujar(render, &sprJugador, jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
+    spriteDibujar(render, recursos_jugador(), jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
 
     rect.x = jugador.x;
     rect.y = jugador.y;
@@ -603,7 +588,7 @@ void gameDibujar(SDL_Renderer *render)
     enemigo_dibujar(&vEnemigos, render);
 
     /* Dibujar escudos */
-    mapa_escudos_dibujar(render);
+    escudo_dibujar(&vEscudos, &vEscudosPartes, render);
 
     /* Dibujar disparo del jugador */
     vectorMap(&vBalasJugador, bala_dibujar, render);
@@ -653,25 +638,20 @@ void gameDestruir(void)
 
     int i;
 
-    spriteLiberar(&sprFondo);
-    spriteLiberar(&sprJugador);
-    spriteLiberar(&sprMenu);
+    recursos_liberar();
     musicaDetener();
-    //spriteLiberar(&sprEnemigos);
-    //spriteLiberar(&sprEscudos);
 
-    mapa_escudos_destruir();
-    enemigo_liberar();
-    mapa_sprites_liberar();
+    if(escudosCreados)
+    {
+        escudo_destruir(&vEscudos, &vEscudosPartes);
+        escudosCreados = false;
+    }
 
     sonidoLiberar(sndDisparoJugador);
     sonidoLiberar(sndDisparoEnemigo);
-    sonidoLiberar(sndExplosion);
     sonidoLiberar(sndFinalNivel);
     for(i = 0; i < CANT_PASOS; i++)
         sonidoLiberar(sndNaveBajando[i]);
-
-
 
     if(balasJugadorCreadas)
     {

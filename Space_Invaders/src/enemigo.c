@@ -4,6 +4,7 @@
 #include "vector.h"
 
 #include "enemigo.h"
+#include "recursos.h"
 #include "sprites.h"
 
 /* Formacion clasica del Space Invaders (5 filas x 11 columnas) */
@@ -26,11 +27,9 @@
 
 /* La coleccion de enemigos (vEnemigos) es del juego: llega por parametro. */
 
-/* Sprites de cada bicho: [0] normal, [1] animado */
-static tSprite sprCalamar[2] = {0};
-static tSprite sprCangrejo[2] = {0};
-static tSprite sprPulpo[2] = {0};
-static tSprite sprEliminado = {0};
+/* =========================================================
+ * Estado de la formacion
+ * ========================================================= */
 
 static int frameAnimacion = 0;   /* alterna el sprite normal y el animado */
 static int direccion = 1;        /* sentido horizontal de la formacion (+1/-1) */
@@ -50,54 +49,6 @@ static const int tiposNivel1[FILAS_ENEMIGOS] =
     ENEMIGO_PULPO_TURQUESA,
     ENEMIGO_PULPO_MORADO
 };
-
-/* =========================================================
- * Sprites
- * ========================================================= */
-bool enemigo_cargar(SDL_Renderer *render)
-{
-    /* Cada bicho tiene su sprite normal y su sprite animado */
-    if(!spriteCargar(&sprCalamar[0], render,
-                     "assets/images/calamar.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprCalamar[1], render,
-                     "assets/images/calamar_anim.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprCangrejo[0], render,
-                     "assets/images/cangrejo.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprCangrejo[1], render,
-                     "assets/images/cangrejo_anim.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprPulpo[0], render,
-                     "assets/images/pulpo.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprPulpo[1], render,
-                     "assets/images/pulpo_anim.png", 1, 0))
-        return false;
-
-    if(!spriteCargar(&sprEliminado, render,
-                     "assets/images/eliminado.png", 1, 0))
-        return false;
-
-    return true;
-}
-
-void enemigo_liberar(void)
-{
-    spriteLiberar(&sprCalamar[0]);
-    spriteLiberar(&sprCangrejo[0]);
-    spriteLiberar(&sprPulpo[0]);
-    spriteLiberar(&sprCalamar[1]);
-    spriteLiberar(&sprCangrejo[1]);
-    spriteLiberar(&sprPulpo[1]);
-    spriteLiberar(&sprEliminado);
-}
 
 /* =========================================================
  * Formacion
@@ -145,7 +96,7 @@ static int dibujarEnemigo(void *elem, void *datos)
 {
     tEnemigo *enemigo = elem;
     SDL_Renderer *render = datos;
-    tSprite *sprite = NULL;
+    const tSprite *sprite = NULL;
 
     if(!enemigo->activo)
         return 1;
@@ -154,27 +105,27 @@ static int dibujarEnemigo(void *elem, void *datos)
     switch(enemigo->tipo)
     {
         case ENEMIGO_CALAMAR_VERDE:
-            sprite = &sprCalamar[frameAnimacion];
+            sprite = recursos_calamar(frameAnimacion);
             SDL_SetTextureColorMod(sprite->textura, 0, 255, 0);
             break;
 
         case ENEMIGO_CANGREJO_VERDE:
-            sprite = &sprCangrejo[frameAnimacion];
+            sprite = recursos_cangrejo(frameAnimacion);
             SDL_SetTextureColorMod(sprite->textura, 0, 255, 0);
             break;
 
         case ENEMIGO_CANGREJO_TURQUESA:
-            sprite = &sprCangrejo[frameAnimacion];
+            sprite = recursos_cangrejo(frameAnimacion);
             SDL_SetTextureColorMod(sprite->textura, 0, 255, 200);
             break;
 
         case ENEMIGO_PULPO_TURQUESA:
-            sprite = &sprPulpo[frameAnimacion];
+            sprite = recursos_pulpo(frameAnimacion);
             SDL_SetTextureColorMod(sprite->textura, 0, 255, 200);
             break;
 
         case ENEMIGO_PULPO_MORADO:
-            sprite = &sprPulpo[frameAnimacion];
+            sprite = recursos_pulpo(frameAnimacion);
             SDL_SetTextureColorMod(sprite->textura, 200, 102, 238);
             break;
 
@@ -185,7 +136,7 @@ static int dibujarEnemigo(void *elem, void *datos)
     /* Los que ya bajaron demasiado se avisan en amarillo */
     if(enemigo->y >= ALTURA_AMARILLA)
         SDL_SetTextureColorMod(sprite->textura, 255, 255, 0);
-    if(enemigo->y >= ALTURA_ROJA)
+    if(enemigo->y >= ENEMIGO_ALTURA_ROJA)
         SDL_SetTextureColorMod(sprite->textura, 255, 0, 0);
 
     spriteDibujar(render, sprite,
@@ -203,7 +154,7 @@ static void dibujarEliminado(SDL_Renderer *render)
         if(SDL_GetTicks() - tiempoEliminado >= DURACION_ELIMINADO)
             mostrarEliminado = 0;
         else
-            spriteDibujar(render, &sprEliminado,
+            spriteDibujar(render, recursos_enemigo_eliminado(),
                           eliminadoX, eliminadoY,
                           ENEMIGO_ANCHO, ENEMIGO_ALTO);
     }
