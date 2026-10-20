@@ -1,6 +1,8 @@
 #ifndef JUGADOR_H
 #define JUGADOR_H
 
+#include "motor.h"
+
 typedef struct
 {
     int x;

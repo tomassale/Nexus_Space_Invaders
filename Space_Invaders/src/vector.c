@@ -17,6 +17,9 @@ int vectorCrear(Vector *v, size_t capacidad, size_t tamElem)
 void vectorDestruir(Vector *v)
 {
     free(v->vec);
+    v->vec = NULL;
+    v->ce = 0;
+    v->capacidad = 0;
 }
 
 void vectorVaciar(Vector *v)

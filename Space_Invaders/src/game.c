@@ -7,6 +7,7 @@
 #include "enemigo.h"
 #include "escudo.h"
 #include "bala.h"
+#include "motor.h"
 #include "recursos.h"
 #include "sprites.h"
 #include "audio.h"
@@ -14,16 +15,11 @@
 #include "vector.h"
 #include "colision.h"
 
-#define CANT_PASOS 4
 #define RONDAS_PARA_GANAR 2
 
 #define RUTA_MUSICA_MENU "assets/audio/spaceinvaders1.mpeg"
 
 #define ALTO_CARACTER 8
-
-/* Resolucion logica del juego */
-#define VENTANA_X 256
-#define VENTANA_Y 240
 
 /*** VARIABLES PRIVADAS ***/
 
@@ -50,16 +46,10 @@ static bool escudosCreados = false;
 static float tiempoDisparo = 0;
 
 
-static tSonido *sndDisparoJugador;
-static tSonido *sndDisparoEnemigo;
-static tSonido *sndFinalNivel;
-static tSonido *sndNaveBajando[CANT_PASOS];
-
 static int canalFinalNivel = -1;
 static int pasoActual = 0;
 static bool transicionRonda = false;
 
-static tFuente *fntPuntaje;
 static const int puntosEnemigo[] = {
     30, /* ENEMIGO_CALAMAR_VERDE      (0) */
     20, /* ENEMIGO_CANGREJO_VERDE     (1) */
@@ -86,7 +76,7 @@ static void game_disparar_jugador(void)
     bala_crear(&bala, x, y);
     vectorInsertarAlFinal(&vBalasJugador, &bala);
 
-    sonidoReproducir(sndDisparoJugador);
+    sonidoReproducir(recursos_disparo_jugador());
 }
 
 static void game_disparar_enemigo(void)
@@ -106,7 +96,7 @@ static void game_disparar_enemigo(void)
 
     bala_crear(&bala, x, y);
     if(vectorInsertarAlFinal(&vBalasEnemigo, &bala) == TODO_OK)
-        sonidoReproducir(sndDisparoEnemigo);
+        sonidoReproducir(recursos_disparo_enemigo());
 }
 
 static void game_cooldown_enemigo(float delta)
@@ -304,26 +294,17 @@ static void game_actualizar_disparos(void)
 static void game_dibujar_texto_centrado(SDL_Renderer *render, const char *texto,
                                         int y, SDL_Color color)
 {
-    int x = (VENTANA_X - fuenteAncho(fntPuntaje, texto)) / 2;
+    int x = (VENTANA_X - fuenteAncho(recursos_fuente(), texto)) / 2;
 
-    fuenteDibujar(render, fntPuntaje, texto, x, y, color);
+    fuenteDibujar(render, recursos_fuente(), texto, x, y, color);
 }
 
 static void game_dibujar_menu(SDL_Renderer *render)
 {
     SDL_Color blanco = {255, 255, 255, 255};
-    const tSprite *menu = recursos_menu();
 
-    /* Sin imagen de portada, se usa el fondo del juego con el titulo en texto */
-    if(menu->textura)
-    {
-        spriteDibujar(render, menu, 0, 0, VENTANA_X, VENTANA_Y);
-    }
-    else
-    {
-        spriteDibujar(render, recursos_fondo(), 0, 0, VENTANA_X, VENTANA_Y);
-        game_dibujar_texto_centrado(render, "SPACE INVADERS", VENTANA_Y / 3, blanco);
-    }
+    spriteDibujar(render, recursos_fondo(), 0, 0, VENTANA_X, VENTANA_Y);
+    game_dibujar_texto_centrado(render, "SPACE INVADERS", VENTANA_Y / 3, blanco);
 
     /* Parpadea cada medio segundo, como en los arcades */
     if((SDL_GetTicks() / 500) % 2 == 0)
@@ -373,36 +354,9 @@ static void game_iniciar_ronda(int numero)
 
 bool gameCrear(SDL_Renderer *render)
 {
-    char ruta[64];
-    int i;
-
-    audioVolumen(30);
-    sndDisparoJugador = sonidoCargar("assets/audio/disparo_jugador.wav");
-    sndDisparoEnemigo = sonidoCargar("assets/audio/disparo_enemigo.wav");
-    sndFinalNivel = sonidoCargar("assets/audio/final_nivel.wav");
-
-    fntPuntaje = fuenteCargar("assets/fonts/space_invaders.ttf", 8);
-
-    for(i = 0; i < CANT_PASOS; i++)
-    {
-        snprintf(ruta, sizeof(ruta), "assets/audio/fastinvader%d.wav", i + 1);
-        sndNaveBajando[i] = sonidoCargar(ruta);
-    }
+    audioVolumen(20);
 
     if(!recursos_cargar(render))
-    {
-        gameDestruir();
-        return false;
-    }
-
-    if(!sndDisparoJugador || !sndDisparoEnemigo || !sndFinalNivel ||
-       !sndNaveBajando[0] || !sndNaveBajando[1] || !sndNaveBajando[2] || !sndNaveBajando[3])
-    {
-        gameDestruir();
-        return false;
-    }
-
-    if(!fntPuntaje)
     {
         gameDestruir();
         return false;
@@ -535,7 +489,7 @@ void gameActualizar(float delta)
 
         game_enemigos_rompen_escudos();
 
-        sonidoReproducir(sndNaveBajando[pasoActual]);
+        sonidoReproducir(recursos_nave_bajando(pasoActual));
         pasoActual = (pasoActual + 1) % CANT_PASOS;
         tiempoMovimientoEnemigos -= intervaloMovimiento;
     }
@@ -545,7 +499,7 @@ void gameActualizar(float delta)
         if(ronda < RONDAS_PARA_GANAR)
         {
             transicionRonda = true;
-            canalFinalNivel = sonidoReproducir(sndFinalNivel);
+            canalFinalNivel = sonidoReproducir(recursos_final_nivel());
         }else{
             victoria= true;
         }
@@ -571,10 +525,10 @@ void gameDibujar(SDL_Renderer *render)
     char buf[32];
 
     snprintf(buf, sizeof(buf), "HIGH SCORE %05d", puntaje);
-    fuenteDibujar(render, fntPuntaje, buf, 8, 4, blanco);
+    fuenteDibujar(render, recursos_fuente(), buf, 8, 4, blanco);
 
     snprintf(buf, sizeof(buf), "1UP ROUND %02d  LIVES %02d", ronda, jugador.vidas);
-    fuenteDibujar(render, fntPuntaje, buf, 8, 17, blanco);
+    fuenteDibujar(render, recursos_fuente(), buf, 8, 17, blanco);
 
     /* Dibujar jugador */
     spriteDibujar(render, recursos_jugador(), jugador.x, jugador.y, ANCHO_JUGADOR, ALTO_JUGADOR);
@@ -584,10 +538,7 @@ void gameDibujar(SDL_Renderer *render)
     rect.w = ANCHO_JUGADOR;
     rect.h = ALTO_JUGADOR;
 
-    /* Dibujar enemigos */
     enemigo_dibujar(&vEnemigos, render);
-
-    /* Dibujar escudos */
     escudo_dibujar(&vEscudos, &vEscudosPartes, render);
 
     /* Dibujar disparo del jugador */
@@ -635,9 +586,6 @@ bool gameEjecutando(void)
 
 void gameDestruir(void)
 {
-
-    int i;
-
     recursos_liberar();
     musicaDetener();
 
@@ -646,12 +594,6 @@ void gameDestruir(void)
         escudo_destruir(&vEscudos, &vEscudosPartes);
         escudosCreados = false;
     }
-
-    sonidoLiberar(sndDisparoJugador);
-    sonidoLiberar(sndDisparoEnemigo);
-    sonidoLiberar(sndFinalNivel);
-    for(i = 0; i < CANT_PASOS; i++)
-        sonidoLiberar(sndNaveBajando[i]);
 
     if(balasJugadorCreadas)
     {
@@ -670,9 +612,6 @@ void gameDestruir(void)
         vectorDestruir(&vEnemigos);
         enemigosCreados = false;
     }
-
-    fuenteLiberar(fntPuntaje);
-    fntPuntaje = NULL;
 
     ejecutando = false;
 }

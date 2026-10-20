@@ -4,6 +4,7 @@
 #include "vector.h"
 
 #include "enemigo.h"
+#include "motor.h"
 #include "recursos.h"
 #include "sprites.h"
 
@@ -15,7 +16,6 @@
 #define SEPARACION_X 20
 #define SEPARACION_Y 15
 
-#define VENTANA_X 256
 #define VELOCIDAD_ENEMIGOS 2
 #define DESCENSO_ENEMIGOS 10
 #define ALTURA_AMARILLA 150
